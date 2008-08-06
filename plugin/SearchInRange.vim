@@ -3,6 +3,13 @@
 "
 " DESCRIPTION:
 " USAGE:
+":[range]SearchInRange 	Jump to first occurrence of the current search pattern
+"			inside [range]. Limit search to lines inside [range]
+"			when jumping to the next search result. 
+":[range]SearchInRange <pattern>
+"			Search for <pattern>, starting with the first occurrence
+"			inside [range]. Limit search to lines inside [range]
+"			when jumping to the next search result. 
 " INSTALLATION:
 " DEPENDENCIES:
 "   - EchoWithoutScrolling.vim autoload script. 
@@ -21,7 +28,7 @@
 "	001	07-Aug-2008	file creation
 
 " Avoid installing twice or when in unsupported VIM version. 
-if exists('g:loaded_SearchInRange') || v:version < 700
+if exists('g:loaded_SearchInRange') || (v:version < 700)
     finish
 endif
 let g:loaded_SearchInRange = 1
@@ -95,10 +102,17 @@ function! s:SearchInRange( isBackward )
 		endif
 	    endif
 	else
+	    " We're inside the range, check for movements from outside the range
+	    " and for wrapping inside the range (which can lead to here if all
+	    " matches are inside the range). 
 	    if l:prevLine < s:startLine
 		call s:WrapMessage('skipping to TOP of range')
 	    elseif l:prevLine > s:endLine
 		call s:WrapMessage('skipping to BOTTOM of range')
+	    elseif ! a:isBackward && l:line < l:prevLine
+		call s:WrapMessage('search hit BOTTOM, continuing at TOP')
+	    elseif a:isBackward && l:line > l:prevLine
+		call s:WrapMessage('search hit TOP, continuing at BOTTOM')
 	    else
 		call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . @/ )
 	    endif
@@ -114,16 +128,20 @@ function! s:SearchInRange( isBackward )
     endif
 endfunction
 
-
-function! s:SetRange( startLine, endLine, pattern )
+function! s:SetAndSearchInRange( startLine, endLine, pattern )
     let s:startLine = a:startLine
     let s:endLine = a:endLine
     if ! empty(a:pattern)
 	let @/ = a:pattern
     endif
-endfunction
 
-command! -nargs=? -range SearchInRange call <SID>SetRange(<line1>,<line2>,<q-args>)
+    " Integration into SearchRepeat.vim
+    silent! call SearchRepeat#Set("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 2)<CR>
+
+    return s:SearchInRange(0)
+endfunction
+command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line2>,<q-args>) && &hlsearch<Bar>set hlsearch<Bar>endif
+
 
 nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if <SID>SearchInRange(0) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
 nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
