@@ -64,8 +64,8 @@ function! s:SearchInRange( isBackward )
 	" No match, not even outside the range. 
 	let l:searchError = 'Pattern not found: ' . @/
     else
-	if ! a:isBackward && l:line > s:endLine
-	    " We moved beyond the end of range, restart at start of range. 
+	if ! a:isBackward && (l:line < s:startLine || l:line > s:endLine)
+	    " We moved outside the range, restart at start of range. 
 	    call s:MoveToRangeStart()
 	    let l:line = search( @/, '' )
 
@@ -79,9 +79,8 @@ function! s:SearchInRange( isBackward )
 		    call s:WrapMessage('search hit BOTTOM of range, continuing at TOP')
 		endif
 	    endif
-	elseif a:isBackward && l:line < s:startLine
-	    " We moved beyond the start of range, restart at end of range, last
-	    " column. 
+	elseif a:isBackward && (l:line < s:startLine || l:line > s:endLine)
+	    " We moved outside the range, restart at end of range. 
 	    call s:MoveToRangeEnd()
 	    let l:line = search( @/, 'b' )
 
