@@ -27,9 +27,13 @@ endif
 let g:loaded_SearchInRange = 1
 
 function! s:WrapMessage( message )
-    echohl WarningMsg
-    echomsg a:message
-    echohl NONE
+    if &shortmess !~# 's'
+	echohl WarningMsg
+	echomsg a:message
+	echohl NONE
+    else
+	call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . @/ )
+    endif
 endfunction
 function! s:SearchErrorMessage( message )
     echohl ErrorMsg
@@ -37,31 +41,37 @@ function! s:SearchErrorMessage( message )
     echohl NONE
 endfunction
 
+function! s:MoveToRangeStart()
+    call cursor(s:startLine, 1)
+endfunction
+function! s:MoveToRangeEnd()
+    call cursor(s:endLine, 1)
+    call cursor(s:endLine, col('$'))
+endfunction
 function! s:SearchInRange( isBackward )
     let l:prevLine = line('.')
     let l:prevCol = col('.')
 
     if l:prevLine < s:startLine
-	call cursor(s:startLine, 1)
+	call s:MoveToRangeStart()
     elseif l:prevLine > s:endLine
-	call cursor(s:endLine, 1)
-	call cursor(s:endLine, col('$'))
+	call s:MoveToRangeEnd()
     endif
 
-    let l:isFoundMatch = 0
+    let l:searchError = ''
     let l:line = search( @/, (a:isBackward ? 'b' : '') )
     if l:line == 0
-	call s:SearchErrorMessage( 'Pattern not found: ' . @/ )
-	call cursor(l:prevLine, l:prevCol)
-	return 0
+	" No match, not even outside the range. 
+	let l:searchError = 'Pattern not found: ' . @/
     else
 	if ! a:isBackward && l:line > s:endLine
-	    call cursor(s:startLine, 1)
+	    " We moved beyond the end of range, restart at start of range. 
+	    call s:MoveToRangeStart()
 	    let l:line = search( @/, '' )
+
 	    if l:line > s:endLine
-		call s:SearchErrorMessage( 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/ )
-		call cursor(l:prevLine, l:prevCol)
-		return 0
+		" Only matches outside of range. 
+		let l:searchError = 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/
 	    else
 		if l:prevLine > s:endLine
 		    call s:WrapMessage('skipping to TOP of range')
@@ -69,15 +79,15 @@ function! s:SearchInRange( isBackward )
 		    call s:WrapMessage('search hit BOTTOM of range, continuing at TOP')
 		endif
 	    endif
-	    return 1
 	elseif a:isBackward && l:line < s:startLine
-	    call cursor(s:endLine, 1)
-	    call cursor(s:endLine, col('$'))
+	    " We moved beyond the start of range, restart at end of range, last
+	    " column. 
+	    call s:MoveToRangeEnd()
 	    let l:line = search( @/, 'b' )
+
 	    if l:line < s:startLine
-		call s:SearchErrorMessage( 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/ )
-		call cursor(l:prevLine, l:prevCol)
-		return 0
+		" Only matches outside of range. 
+		let s:searchError = 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/
 	    else
 		if l:prevLine < s:startLine
 		    call s:WrapMessage('skipping to BOTTOM of range')
@@ -85,21 +95,24 @@ function! s:SearchInRange( isBackward )
 		    call s:WrapMessage('search hit TOP of range, continuing at BOTTOM')
 		endif
 	    endif
-	    return 1
 	else
 	    if l:prevLine < s:startLine
 		call s:WrapMessage('skipping to TOP of range')
 	    elseif l:prevLine > s:endLine
 		call s:WrapMessage('skipping to BOTTOM of range')
 	    else
-		call EchoWithoutScrolling#Echo( s:startLine . ',' . s:endLine . '/' . @/ )
+		call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . @/ )
 	    endif
 	endif
-	return 1
     endif
 
-    call s:SearchErrorMessage( 'Pattern not found: ' . @/ )
-    return 0
+    if ! empty(l:searchError)
+	call s:SearchErrorMessage(l:searchError)
+	call cursor(l:prevLine, l:prevCol)
+	return 0
+    else
+	return 1
+    endif
 endfunction
 
 
