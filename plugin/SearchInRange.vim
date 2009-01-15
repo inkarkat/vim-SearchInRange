@@ -10,6 +10,13 @@
 "			Search for <pattern>, starting with the first occurrence
 "			inside [range]. Limit search to lines inside [range]
 "			when jumping to the next search result. 
+"{Visual}<Leader>/	Jump to first occurrence of the current search pattern
+"			inside selection. Limit search to lines inside selection
+"			when jumping to the next search result. 
+"<Leader>/{motion}	Use the moved-over lines as a range to limit searches
+"			to. Jump to first occurrence of the current search
+"			pattern inside the range. 
+"
 " INSTALLATION:
 " DEPENDENCIES:
 "   - EchoWithoutScrolling.vim autoload script. 
@@ -21,6 +28,10 @@
 " ASSUMPTIONS:
 " KNOWN PROBLEMS:
 " TODO:
+"   - Handle [count]. 
+"   - Optionally highlight range. 
+"   - Check for existence of s:startLine. 
+"   - Make s:startLine buffer / window -variable. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
@@ -124,6 +135,9 @@ function! s:SearchInRange( isBackward )
 	call cursor(l:prevLine, l:prevCol)
 	return 0
     else
+	" Note: When typed, [*#nN] open the fold at the search result, but inside a
+	" mapping or :normal this must be done explicitly via 'zv'. 
+	normal! zv
 	return 1
     endif
 endfunction
@@ -140,7 +154,22 @@ function! s:SetAndSearchInRange( startLine, endLine, pattern )
 
     return s:SearchInRange(0)
 endfunction
-command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line2>,<q-args>) && &hlsearch<Bar>set hlsearch<Bar>endif
+command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line2>,<q-args>) && &hlsearch|set hlsearch|endif
+
+
+vnoremap <Plug>SearchInRange :SearchInRange<CR>
+if ! hasmapto('<Plug>SearchInRange', 'v')
+    vmap <silent> <Leader>/ <Plug>SearchInRange
+endif
+
+
+function! s:SearchInRangeOperator( type )
+    call s:SetAndSearchInRange(line("'["), line("']"), '')
+endfunction
+nnoremap <Plug>SearchInRangeOperator :set opfunc=<SID>SearchInRangeOperator<CR>g@
+if ! hasmapto('<Plug>SearchInRangeOperator', 'n')
+    nmap <silent> <Leader>/ <Plug>SearchInRangeOperator
+endif
 
 
 nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if <SID>SearchInRange(0) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
@@ -151,8 +180,8 @@ nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hls
 try
     call SearchRepeat#Register("\<Plug>SearchInRangeNext", '', 'gnr', 'Search forward in range')
     call SearchRepeat#Register("\<Plug>SearchInRangePrev", '', 'gnR', 'Search backward in range')
-    nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 2)<CR>
-    nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 2)<CR>
+    nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 0)<CR>
+    nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 0)<CR>
 catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
 endtry
 
