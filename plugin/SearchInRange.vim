@@ -36,6 +36,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	002	16-Jan-2009	Now setting v:errmsg on errors. 
 "	001	07-Aug-2008	file creation
 
 " Avoid installing twice or when in unsupported VIM version. 
@@ -55,7 +56,8 @@ function! s:WrapMessage( message )
 endfunction
 function! s:SearchErrorMessage( message )
     echohl ErrorMsg
-    echomsg 'E486:' a:message
+    let v:errmsg = 'E486: ' . a:message
+    echomsg v:errmsg
     echohl NONE
 endfunction
 
