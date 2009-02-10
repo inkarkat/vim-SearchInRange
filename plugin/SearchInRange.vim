@@ -36,6 +36,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	003	03-Feb-2009	Added activation mapping to SearchRepeat
+"				registration. 
 "	002	16-Jan-2009	Now setting v:errmsg on errors. 
 "	001	07-Aug-2008	file creation
 
@@ -180,11 +182,19 @@ nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hls
 " Integration into SearchRepeat.vim
 " gnr / gnR		Go next search result in range. 
 try
-    call SearchRepeat#Register("\<Plug>SearchInRangeNext", '', 'gnr', 'Search forward in range')
+    " The user might have mapped these to something else; the only way to be
+    " sure would be to grep the :map output. We just include the mapping if it's
+    " the default one; the user could re-register, anyway. 
+    let s:mapping = (exists('mapleader') ? mapleader : '\') . '/'
+    let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>SearchInRangeOperator' ? s:mapping : '')
+
+    call SearchRepeat#Register("\<Plug>SearchInRangeNext", s:mapping, 'gnr', 'Search forward in range')
     call SearchRepeat#Register("\<Plug>SearchInRangePrev", '', 'gnR', 'Search backward in range')
     nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 0)<CR>
     nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 0)<CR>
 catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
+finally
+    unlet! s:mapping
 endtry
 
 " vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
