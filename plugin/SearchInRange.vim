@@ -36,6 +36,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	004	11-Feb-2009	Now setting v:warningmsg on warnings. 
 "	003	03-Feb-2009	Added activation mapping to SearchRepeat
 "				registration. 
 "	002	16-Jan-2009	Now setting v:errmsg on errors. 
@@ -50,8 +51,9 @@ let g:loaded_SearchInRange = 1
 function! s:WrapMessage( message )
     if &shortmess !~# 's'
 	echohl WarningMsg
-	echomsg a:message
-	echohl NONE
+	let v:warningmsg = a:message
+	echomsg v:warningmsg
+	echohl None
     else
 	call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . @/ )
     endif
@@ -60,7 +62,7 @@ function! s:SearchErrorMessage( message )
     echohl ErrorMsg
     let v:errmsg = 'E486: ' . a:message
     echomsg v:errmsg
-    echohl NONE
+    echohl None
 endfunction
 
 function! s:MoveToRangeStart()
