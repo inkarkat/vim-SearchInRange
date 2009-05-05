@@ -6,8 +6,8 @@
 ":[range]SearchInRange 	Jump to first occurrence of the current search pattern
 "			inside [range]. Limit search to lines inside [range]
 "			when jumping to the next search result. 
-":[range]SearchInRange <pattern>
-"			Search for <pattern>, starting with the first occurrence
+":[range]SearchInRange {pattern}
+"			Search for {pattern}, starting with the first occurrence
 "			inside [range]. Limit search to lines inside [range]
 "			when jumping to the next search result. 
 "{Visual}<Leader>/	Jump to first occurrence of the current search pattern
