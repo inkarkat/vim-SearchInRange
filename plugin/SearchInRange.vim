@@ -3,19 +3,22 @@
 "
 " DESCRIPTION:
 " USAGE:
-":[range]SearchInRange 	Jump to first occurrence of the current search pattern
-"			inside [range]. Limit search to lines inside [range]
-"			when jumping to the next search result. 
+":[range]SearchInRange 	Search forward to the first occurrence of the current
+"			search pattern inside [range]. Limit search to lines
+"			inside [range] when jumping to the next search result. 
 ":[range]SearchInRange {pattern}
 "			Search for {pattern}, starting with the first occurrence
 "			inside [range]. Limit search to lines inside [range]
 "			when jumping to the next search result. 
-"{Visual}<Leader>/	Jump to first occurrence of the current search pattern
-"			inside selection. Limit search to lines inside selection
-"			when jumping to the next search result. 
+"{Visual}<Leader>/	Jump to the first occurrence of the current search
+"			pattern inside selection. Limit search to lines inside
+"			selection when jumping to the next search result. 
 "<Leader>/{motion}	Use the moved-over lines as a range to limit searches
 "			to. Jump to first occurrence of the current search
 "			pattern inside the range. 
+"
+" gnr / gnR		Search forward / backward to the first occurrence of the
+"			current search result in the previously specified range. 
 "
 " INSTALLATION:
 " DEPENDENCIES:
@@ -50,6 +53,7 @@ if exists('g:loaded_SearchInRange') || (v:version < 700)
 endif
 let g:loaded_SearchInRange = 1
 
+"- functions ------------------------------------------------------------------
 function! s:WrapMessage( message )
     if &shortmess !~# 's'
 	echohl WarningMsg
@@ -150,6 +154,7 @@ function! s:SearchInRange( isBackward )
     endif
 endfunction
 
+"- commands -------------------------------------------------------------------
 function! s:SetAndSearchInRange( startLine, endLine, pattern )
     let s:startLine = a:startLine
     let s:endLine = a:endLine
@@ -165,6 +170,7 @@ endfunction
 command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line2>,<q-args>) && &hlsearch|set hlsearch|endif
 
 
+"- mappings -------------------------------------------------------------------
 vnoremap <Plug>SearchInRange :SearchInRange<CR>
 if ! hasmapto('<Plug>SearchInRange', 'v')
     vmap <silent> <Leader>/ <Plug>SearchInRange
@@ -184,7 +190,6 @@ nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if <SID>SearchInRange(0) && &hls
 nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
 
 " Integration into SearchRepeat.vim
-" gnr / gnR		Go next search result in range. 
 try
     " The user might have mapped these to something else; the only way to be
     " sure would be to grep the :map output. We just include the mapping if it's
