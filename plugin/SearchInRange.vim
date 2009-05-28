@@ -39,6 +39,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	006	15-May-2009	BF: Translating line breaks in search pattern
+"				via EchoWithoutScrolling#TranslateLineBreaks()
+"				to avoid echoing only the last part of the
+"				search pattern when it contains line breaks. 
 "	005	06-May-2009	Added a:relatedCommands to
 "				SearchRepeat#Register(). 
 "	004	11-Feb-2009	Now setting v:warningmsg on warnings. 
@@ -61,7 +65,7 @@ function! s:WrapMessage( message )
 	echomsg v:warningmsg
 	echohl None
     else
-	call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . @/ )
+	call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/) )
     endif
 endfunction
 function! s:SearchErrorMessage( message )
@@ -137,7 +141,7 @@ function! s:SearchInRange( isBackward )
 	    elseif a:isBackward && l:line > l:prevLine
 		call s:WrapMessage('search hit TOP, continuing at BOTTOM')
 	    else
-		call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . @/ )
+		call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/) )
 	    endif
 	endif
     endif
