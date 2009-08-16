@@ -49,6 +49,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
 "	007	29-May-2009	Added "go once" mappings that do not integrate
 "				into SearchRepeat.vim. 
 "	006	15-May-2009	BF: Translating line breaks in search pattern
@@ -217,8 +218,8 @@ try
     let s:mapping = (exists('mapleader') ? mapleader : '\') . '/'
     let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>SearchInRangeOperator' ? s:mapping : '')
 
-    call SearchRepeat#Register("\<Plug>SearchInRangeNext", s:mapping, 'gnr', 'Search forward in range', ':[range]SearchInRange [{pattern}]')
-    call SearchRepeat#Register("\<Plug>SearchInRangePrev", '', 'gnR', 'Search backward in range', '')
+    call SearchRepeat#Register("\<Plug>SearchInRangeNext", s:mapping, 'gnr', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]')
+    call SearchRepeat#Register("\<Plug>SearchInRangePrev", '', 'gnR', '?range?', 'Search backward in range', '')
     nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 0)<CR>
     nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 0)<CR>
 catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
