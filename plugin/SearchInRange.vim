@@ -17,13 +17,23 @@
 "			to. Jump to first occurrence of the current search
 "			pattern inside the range. 
 "
-" gnr / gnR		Search forward / backward to the first occurrence of the
+"   The special searches all start with 'go...' (mnemonic: "go once to special
+"   match"); and come in search forward (ending with lowercase letter) and
+"   search backward (uppercase letter) variants. 
+"
+" gor / goR		Search forward / backward to the first occurrence of the
 "			current search result in the previously specified range. 
+"
+"   If the SearchRepeat plugin is installed, a parallel set of "go now and for
+"   next searches" mappings (starting with 'gn...' instead of 'go...') is
+"   installed. These mappings have the same effect, but in addition re-program
+"   the 'n/N' keys to repeat this particular search (until another gn... search
+"   is used). 
 "
 " INSTALLATION:
 " DEPENDENCIES:
 "   - EchoWithoutScrolling.vim autoload script. 
-"   - SearchRepeat.vim (optional integration)
+"   - SearchRepeat.vim autoload script (optional integration). 
 "
 " CONFIGURATION:
 " INTEGRATION:
@@ -39,6 +49,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	007	29-May-2009	Added "go once" mappings that do not integrate
+"				into SearchRepeat.vim. 
 "	006	15-May-2009	BF: Translating line breaks in search pattern
 "				via EchoWithoutScrolling#TranslateLineBreaks()
 "				to avoid echoing only the last part of the
@@ -192,6 +204,10 @@ endif
 
 nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if <SID>SearchInRange(0) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
 nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
+
+nmap <silent> gor <Plug>SearchInRangeNext
+nmap <silent> goR <Plug>SearchInRangePrev
+
 
 " Integration into SearchRepeat.vim
 try
