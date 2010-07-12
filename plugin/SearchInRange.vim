@@ -52,6 +52,9 @@
 "	010	13-Jul-2010	Refactored so that error / wrap / echo message
 "				output is done at the end of the script, not
 "				inside the logic. 
+"				ENH: The search adds the original cursor
+"				position to the jump list, like the built-in
+"				[/?*#nN] commands. 
 "	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
 "				Undefined variable: s:startLine". 
 "	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
@@ -112,6 +115,7 @@ function! s:SearchInRange( isBackward )
 	return 0
     endif
 
+    let l:save_view = winsaveview()
     let l:prevLine = line('.')
     let l:prevCol = col('.')
 
@@ -181,9 +185,20 @@ function! s:SearchInRange( isBackward )
 	return 0
     endif
 
-    " Note: When typed, [*#nN] open the fold at the search result, but inside a
-    " mapping or :normal this must be done explicitly via 'zv'. 
+    let l:matchPosition = getpos('.')
+
+    " Open fold at the search result, like the built-in commands. 
     normal! zv
+
+    " Add the original cursor position to the jump list, like the [/?*#nN]
+    " commands. 
+    " Implementation: Memorize the match position, restore the view to the state
+    " before the search, then jump straight back to the match position. This
+    " also allows us to set a jump only if a match was found. (:call
+    " setpos("''", ...) doesn't work in Vim 7.2) 
+    call winrestview(l:save_view)
+    normal! m'
+    call setpos('.', l:matchPosition)
 
     if l:message[0] ==# 'wrap'
 	call s:WrapMessage(l:message[1])
