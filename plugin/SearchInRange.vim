@@ -21,8 +21,9 @@
 "   match"); and come in search forward (ending with lowercase letter) and
 "   search backward (uppercase letter) variants. 
 "
-" gor / goR		Search forward / backward to the first occurrence of the
-"			current search result in the previously specified range. 
+" [count]gor / goR	Search forward / backward to the [count]'th occurrence
+"			of the current search result in the previously specified
+"			range. 
 "
 "   If the SearchRepeat plugin is installed, a parallel set of "go now and for
 "   next searches" mappings (starting with 'gn...' instead of 'go...') is
@@ -41,14 +42,13 @@
 " ASSUMPTIONS:
 " KNOWN PROBLEMS:
 " TODO:
-"   - Handle [count]. 
 "   - Optionally highlight range. 
-"   - Check for existence of s:startLine. 
 "   - Make s:startLine buffer / window -variable. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	011	13-Jul-2010	ENH: Now handling [count]. 
 "	010	13-Jul-2010	Refactored so that error / wrap / echo message
 "				output is done at the end of the script, not
 "				inside the logic. 
@@ -115,69 +115,71 @@ function! s:SearchInRange( isBackward )
 	return 0
     endif
 
+    let l:count = v:count1
     let l:save_view = winsaveview()
-    let l:prevLine = line('.')
-    let l:prevCol = col('.')
+    let l:message = ['echo', ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/)]
 
-    if l:prevLine < s:startLine
-	call s:MoveToRangeStart()
-    elseif l:prevLine > s:endLine
-	call s:MoveToRangeEnd()
-    endif
+    while l:count > 0 && l:message[0] !=# 'error'
+	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
 
-    let l:message = ['', '']
-    let l:line = search( @/, (a:isBackward ? 'b' : '') )
-    if l:line == 0
-	" No match, not even outside the range. 
-	let l:message = ['error', 'Pattern not found: ' . @/]
-    else
-	if ! a:isBackward && (l:line < s:startLine || l:line > s:endLine)
-	    " We moved outside the range, restart at start of range. 
+	if l:prevLine < s:startLine
 	    call s:MoveToRangeStart()
-	    let l:line = search( @/, '' )
-
-	    if l:line > s:endLine
-		" Only matches outside of range. 
-		let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
-	    else
-		if l:prevLine > s:endLine
-		    let l:message = ['wrap', 'skipping to TOP of range']
-		else
-		    let l:message = ['wrap', 'search hit BOTTOM of range, continuing at TOP']
-		endif
-	    endif
-	elseif a:isBackward && (l:line < s:startLine || l:line > s:endLine)
-	    " We moved outside the range, restart at end of range. 
+	elseif l:prevLine > s:endLine
 	    call s:MoveToRangeEnd()
-	    let l:line = search( @/, 'b' )
+	endif
 
-	    if l:line < s:startLine
-		" Only matches outside of range. 
-		let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
-	    else
-		if l:prevLine < s:startLine
-		    let l:message = ['wrap', 'skipping to BOTTOM of range']
-		else
-		    let l:message = ['wrap', 'search hit TOP of range, continuing at BOTTOM']
-		endif
-	    endif
+	let l:line = search( @/, (a:isBackward ? 'b' : '') )
+	if l:line == 0
+	    " No match, not even outside the range. 
+	    let l:message = ['error', 'Pattern not found: ' . @/]
 	else
-	    " We're inside the range, check for movements from outside the range
-	    " and for wrapping inside the range (which can lead to here if all
-	    " matches are inside the range). 
-	    if l:prevLine < s:startLine
-		let l:message = ['wrap', 'skipping to TOP of range']
-	    elseif l:prevLine > s:endLine
-		let l:message = ['wrap', 'skipping to BOTTOM of range']
-	    elseif ! a:isBackward && l:line < l:prevLine
-		let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
-	    elseif a:isBackward && l:line > l:prevLine
-		let l:message = ['wrap', 'search hit TOP, continuing at BOTTOM']
+	    if ! a:isBackward && (l:line < s:startLine || l:line > s:endLine)
+		" We moved outside the range, restart at start of range. 
+		call s:MoveToRangeStart()
+		let l:line = search( @/, '' )
+
+		if l:line > s:endLine
+		    " Only matches outside of range. 
+		    let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
+		else
+		    if l:prevLine > s:endLine
+			let l:message = ['wrap', 'skipping to TOP of range']
+		    else
+			let l:message = ['wrap', 'search hit BOTTOM of range, continuing at TOP']
+		    endif
+		endif
+	    elseif a:isBackward && (l:line < s:startLine || l:line > s:endLine)
+		" We moved outside the range, restart at end of range. 
+		call s:MoveToRangeEnd()
+		let l:line = search( @/, 'b' )
+
+		if l:line < s:startLine
+		    " Only matches outside of range. 
+		    let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
+		else
+		    if l:prevLine < s:startLine
+			let l:message = ['wrap', 'skipping to BOTTOM of range']
+		    else
+			let l:message = ['wrap', 'search hit TOP of range, continuing at BOTTOM']
+		    endif
+		endif
 	    else
-		let l:message = ['echo', ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/)]
+		" We're inside the range, check for movements from outside the range
+		" and for wrapping inside the range (which can lead to here if all
+		" matches are inside the range). 
+		if l:prevLine < s:startLine
+		    let l:message = ['wrap', 'skipping to TOP of range']
+		elseif l:prevLine > s:endLine
+		    let l:message = ['wrap', 'skipping to BOTTOM of range']
+		elseif ! a:isBackward && l:line < l:prevLine
+		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
+		elseif a:isBackward && l:line > l:prevLine
+		    let l:message = ['wrap', 'search hit TOP, continuing at BOTTOM']
+		endif
 	    endif
 	endif
-    endif
+	let l:count -= 1
+    endwhile
 
     if l:message[0] ==# 'error'
 	call s:SearchErrorMessage(l:message[1])
@@ -258,8 +260,8 @@ try
 
     call SearchRepeat#Register("\<Plug>SearchInRangeNext", s:mapping, 'gnr', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]')
     call SearchRepeat#Register("\<Plug>SearchInRangePrev", '', 'gnR', '?range?', 'Search backward in range', '')
-    nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 0)<CR>
-    nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 0)<CR>
+    nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 2)<CR>
+    nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 2)<CR>
 catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
 finally
     unlet! s:mapping
