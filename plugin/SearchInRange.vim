@@ -43,12 +43,14 @@
 " KNOWN PROBLEMS:
 " TODO:
 "   - Optionally highlight range. 
-"   - Make s:startLine buffer / window -variable. 
+"   - Make s:startLine a buffer variable. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
 "	011	13-Jul-2010	ENH: Now handling [count]. 
+"				BUG: Fixed mixed up "skipping to TOP/BOTTOM of
+"				range" message when the search wraps around. 
 "	010	13-Jul-2010	Refactored so that error / wrap / echo message
 "				output is done at the end of the script, not
 "				inside the logic. 
@@ -167,10 +169,8 @@ function! s:SearchInRange( isBackward )
 		" We're inside the range, check for movements from outside the range
 		" and for wrapping inside the range (which can lead to here if all
 		" matches are inside the range). 
-		if l:prevLine < s:startLine
-		    let l:message = ['wrap', 'skipping to TOP of range']
-		elseif l:prevLine > s:endLine
-		    let l:message = ['wrap', 'skipping to BOTTOM of range']
+		if l:prevLine < s:startLine || l:prevLine > s:endLine
+		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range' : 'skipping to TOP of range')]
 		elseif ! a:isBackward && l:line < l:prevLine
 		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
 		elseif a:isBackward && l:line > l:prevLine
