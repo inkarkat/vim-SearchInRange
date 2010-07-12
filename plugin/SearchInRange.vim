@@ -49,6 +49,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
+"				Undefined variable: s:startLine". 
 "	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
 "	007	29-May-2009	Added "go once" mappings that do not integrate
 "				into SearchRepeat.vim. 
@@ -64,7 +66,7 @@
 "	002	16-Jan-2009	Now setting v:errmsg on errors. 
 "	001	07-Aug-2008	file creation
 
-" Avoid installing twice or when in unsupported VIM version. 
+" Avoid installing twice or when in unsupported Vim version. 
 if exists('g:loaded_SearchInRange') || (v:version < 700)
     finish
 endif
@@ -87,6 +89,12 @@ function! s:SearchErrorMessage( message )
     echomsg v:errmsg
     echohl None
 endfunction
+function! s:NoRangeErrorMessage()
+    echohl ErrorMsg
+    let v:errmsg = 'Define range with :SearchInRange first!'
+    echomsg v:errmsg
+    echohl None
+endfunction
 
 function! s:MoveToRangeStart()
     call cursor(s:startLine, 1)
@@ -96,6 +104,11 @@ function! s:MoveToRangeEnd()
     call cursor(s:endLine, col('$'))
 endfunction
 function! s:SearchInRange( isBackward )
+    if ! exists('s:startLine')
+	call s:NoRangeErrorMessage()
+	return 0
+    endif
+
     let l:prevLine = line('.')
     let l:prevCol = col('.')
 
