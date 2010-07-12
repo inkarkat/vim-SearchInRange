@@ -49,6 +49,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	010	13-Jul-2010	BUG: Wrong scope on s:searchError. 
 "	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
 "				Undefined variable: s:startLine". 
 "	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
@@ -146,7 +147,7 @@ function! s:SearchInRange( isBackward )
 
 	    if l:line < s:startLine
 		" Only matches outside of range. 
-		let s:searchError = 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/
+		let l:searchError = 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/
 	    else
 		if l:prevLine < s:startLine
 		    call s:WrapMessage('skipping to BOTTOM of range')
