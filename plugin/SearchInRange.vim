@@ -49,7 +49,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
-"	010	13-Jul-2010	BUG: Wrong scope on s:searchError. 
+"	010	13-Jul-2010	Refactored so that error / wrap / echo message
+"				output is done at the end of the script, not
+"				inside the logic. 
 "	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
 "				Undefined variable: s:startLine". 
 "	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
@@ -119,11 +121,11 @@ function! s:SearchInRange( isBackward )
 	call s:MoveToRangeEnd()
     endif
 
-    let l:searchError = ''
+    let l:message = ['', '']
     let l:line = search( @/, (a:isBackward ? 'b' : '') )
     if l:line == 0
 	" No match, not even outside the range. 
-	let l:searchError = 'Pattern not found: ' . @/
+	let l:message = ['error', 'Pattern not found: ' . @/]
     else
 	if ! a:isBackward && (l:line < s:startLine || l:line > s:endLine)
 	    " We moved outside the range, restart at start of range. 
@@ -132,12 +134,12 @@ function! s:SearchInRange( isBackward )
 
 	    if l:line > s:endLine
 		" Only matches outside of range. 
-		let l:searchError = 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/
+		let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
 	    else
 		if l:prevLine > s:endLine
-		    call s:WrapMessage('skipping to TOP of range')
+		    let l:message = ['wrap', 'skipping to TOP of range']
 		else
-		    call s:WrapMessage('search hit BOTTOM of range, continuing at TOP')
+		    let l:message = ['wrap', 'search hit BOTTOM of range, continuing at TOP']
 		endif
 	    endif
 	elseif a:isBackward && (l:line < s:startLine || l:line > s:endLine)
@@ -147,12 +149,12 @@ function! s:SearchInRange( isBackward )
 
 	    if l:line < s:startLine
 		" Only matches outside of range. 
-		let l:searchError = 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/
+		let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
 	    else
 		if l:prevLine < s:startLine
-		    call s:WrapMessage('skipping to BOTTOM of range')
+		    let l:message = ['wrap', 'skipping to BOTTOM of range']
 		else
-		    call s:WrapMessage('search hit TOP of range, continuing at BOTTOM')
+		    let l:message = ['wrap', 'search hit TOP of range, continuing at BOTTOM']
 		endif
 	    endif
 	else
@@ -160,29 +162,36 @@ function! s:SearchInRange( isBackward )
 	    " and for wrapping inside the range (which can lead to here if all
 	    " matches are inside the range). 
 	    if l:prevLine < s:startLine
-		call s:WrapMessage('skipping to TOP of range')
+		let l:message = ['wrap', 'skipping to TOP of range']
 	    elseif l:prevLine > s:endLine
-		call s:WrapMessage('skipping to BOTTOM of range')
+		let l:message = ['wrap', 'skipping to BOTTOM of range']
 	    elseif ! a:isBackward && l:line < l:prevLine
-		call s:WrapMessage('search hit BOTTOM, continuing at TOP')
+		let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
 	    elseif a:isBackward && l:line > l:prevLine
-		call s:WrapMessage('search hit TOP, continuing at BOTTOM')
+		let l:message = ['wrap', 'search hit TOP, continuing at BOTTOM']
 	    else
-		call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/) )
+		let l:message = ['echo', ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/)]
 	    endif
 	endif
     endif
 
-    if ! empty(l:searchError)
-	call s:SearchErrorMessage(l:searchError)
+    if l:message[0] ==# 'error'
+	call s:SearchErrorMessage(l:message[1])
 	call cursor(l:prevLine, l:prevCol)
 	return 0
-    else
-	" Note: When typed, [*#nN] open the fold at the search result, but inside a
-	" mapping or :normal this must be done explicitly via 'zv'. 
-	normal! zv
-	return 1
     endif
+
+    " Note: When typed, [*#nN] open the fold at the search result, but inside a
+    " mapping or :normal this must be done explicitly via 'zv'. 
+    normal! zv
+
+    if l:message[0] ==# 'wrap'
+	call s:WrapMessage(l:message[1])
+    elseif l:message[0] ==# 'echo'
+	call EchoWithoutScrolling#Echo(l:message[1])
+    endif
+
+    return 1
 endfunction
 
 "- commands -------------------------------------------------------------------
