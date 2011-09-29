@@ -43,7 +43,6 @@
 " KNOWN PROBLEMS:
 " TODO:
 "   - Optionally highlight range. 
-"   - Make s:startLine a buffer variable. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
@@ -51,6 +50,13 @@
 "	011	13-Jul-2010	ENH: Now handling [count]. 
 "				BUG: Fixed mixed up "skipping to TOP/BOTTOM of
 "				range" message when the search wraps around. 
+"				Make s:startLine a buffer variable, so that the
+"				range is remembered for each buffer separately. 
+"				(Linking this to the window doesn't make sense,
+"				as the fixed range probably won't apply to a
+"				different buffer shown in the same window, and
+"				one can easily re-set the range for any new
+"				buffer.) 
 "	010	13-Jul-2010	Refactored so that error / wrap / echo message
 "				output is done at the end of the script, not
 "				inside the logic. 
@@ -58,7 +64,7 @@
 "				position to the jump list, like the built-in
 "				[/?*#nN] commands. 
 "	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
-"				Undefined variable: s:startLine". 
+"				Undefined variable: b:startLine". 
 "	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
 "	007	29-May-2009	Added "go once" mappings that do not integrate
 "				into SearchRepeat.vim. 
@@ -88,7 +94,7 @@ function! s:WrapMessage( message )
 	echomsg v:warningmsg
 	echohl None
     else
-	call EchoWithoutScrolling#Echo( ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/) )
+	call EchoWithoutScrolling#Echo( ':' . b:startLine . ',' . b:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/) )
     endif
 endfunction
 function! s:SearchErrorMessage( message )
@@ -105,28 +111,28 @@ function! s:NoRangeErrorMessage()
 endfunction
 
 function! s:MoveToRangeStart()
-    call cursor(s:startLine, 1)
+    call cursor(b:startLine, 1)
 endfunction
 function! s:MoveToRangeEnd()
-    call cursor(s:endLine, 1)
-    call cursor(s:endLine, col('$'))
+    call cursor(b:endLine, 1)
+    call cursor(b:endLine, col('$'))
 endfunction
 function! s:SearchInRange( isBackward )
-    if ! exists('s:startLine')
+    if ! exists('b:startLine') || ! exists('b:endLine')
 	call s:NoRangeErrorMessage()
 	return 0
     endif
 
     let l:count = v:count1
     let l:save_view = winsaveview()
-    let l:message = ['echo', ':' . s:startLine . ',' . s:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/)]
+    let l:message = ['echo', ':' . b:startLine . ',' . b:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/)]
 
     while l:count > 0 && l:message[0] !=# 'error'
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
 
-	if l:prevLine < s:startLine
+	if l:prevLine < b:startLine
 	    call s:MoveToRangeStart()
-	elseif l:prevLine > s:endLine
+	elseif l:prevLine > b:endLine
 	    call s:MoveToRangeEnd()
 	endif
 
@@ -135,31 +141,31 @@ function! s:SearchInRange( isBackward )
 	    " No match, not even outside the range. 
 	    let l:message = ['error', 'Pattern not found: ' . @/]
 	else
-	    if ! a:isBackward && (l:line < s:startLine || l:line > s:endLine)
+	    if ! a:isBackward && (l:line < b:startLine || l:line > b:endLine)
 		" We moved outside the range, restart at start of range. 
 		call s:MoveToRangeStart()
 		let l:line = search( @/, '' )
 
-		if l:line > s:endLine
+		if l:line > b:endLine
 		    " Only matches outside of range. 
-		    let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
+		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
 		else
-		    if l:prevLine > s:endLine
+		    if l:prevLine > b:endLine
 			let l:message = ['wrap', 'skipping to TOP of range']
 		    else
 			let l:message = ['wrap', 'search hit BOTTOM of range, continuing at TOP']
 		    endif
 		endif
-	    elseif a:isBackward && (l:line < s:startLine || l:line > s:endLine)
+	    elseif a:isBackward && (l:line < b:startLine || l:line > b:endLine)
 		" We moved outside the range, restart at end of range. 
 		call s:MoveToRangeEnd()
 		let l:line = search( @/, 'b' )
 
-		if l:line < s:startLine
+		if l:line < b:startLine
 		    " Only matches outside of range. 
-		    let l:message = ['error', 'Pattern not found in range ' . s:startLine . ',' . s:endLine . ': ' . @/]
+		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
 		else
-		    if l:prevLine < s:startLine
+		    if l:prevLine < b:startLine
 			let l:message = ['wrap', 'skipping to BOTTOM of range']
 		    else
 			let l:message = ['wrap', 'search hit TOP of range, continuing at BOTTOM']
@@ -169,7 +175,7 @@ function! s:SearchInRange( isBackward )
 		" We're inside the range, check for movements from outside the range
 		" and for wrapping inside the range (which can lead to here if all
 		" matches are inside the range). 
-		if l:prevLine < s:startLine || l:prevLine > s:endLine
+		if l:prevLine < b:startLine || l:prevLine > b:endLine
 		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range' : 'skipping to TOP of range')]
 		elseif ! a:isBackward && l:line < l:prevLine
 		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
@@ -213,8 +219,8 @@ endfunction
 
 "- commands -------------------------------------------------------------------
 function! s:SetAndSearchInRange( startLine, endLine, pattern )
-    let s:startLine = a:startLine
-    let s:endLine = a:endLine
+    let b:startLine = a:startLine
+    let b:endLine = a:endLine
     if ! empty(a:pattern)
 	let @/ = a:pattern
     endif
