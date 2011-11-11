@@ -47,6 +47,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	012	30-Sep-2011	Use <silent> for <Plug> mapping instead of
+"				default mapping. 
 "	011	13-Jul-2010	ENH: Now handling [count]. 
 "				BUG: Fixed mixed up "skipping to TOP/BOTTOM of
 "				range" message when the search wraps around. 
@@ -234,26 +236,26 @@ command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line
 
 
 "- mappings -------------------------------------------------------------------
-vnoremap <Plug>SearchInRange :SearchInRange<CR>
+vnoremap <silent> <Plug>SearchInRange :SearchInRange<CR>
 if ! hasmapto('<Plug>SearchInRange', 'v')
-    vmap <silent> <Leader>/ <Plug>SearchInRange
+    vmap <Leader>/ <Plug>SearchInRange
 endif
 
 
 function! s:SearchInRangeOperator( type )
     call s:SetAndSearchInRange(line("'["), line("']"), '')
 endfunction
-nnoremap <Plug>SearchInRangeOperator :set opfunc=<SID>SearchInRangeOperator<CR>g@
+nnoremap <silent> <Plug>SearchInRangeOperator :set opfunc=<SID>SearchInRangeOperator<CR>g@
 if ! hasmapto('<Plug>SearchInRangeOperator', 'n')
-    nmap <silent> <Leader>/ <Plug>SearchInRangeOperator
+    nmap <Leader>/ <Plug>SearchInRangeOperator
 endif
 
 
 nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if <SID>SearchInRange(0) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
 nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
 
-nmap <silent> gor <Plug>SearchInRangeNext
-nmap <silent> goR <Plug>SearchInRangePrev
+nmap gor <Plug>SearchInRangeNext
+nmap goR <Plug>SearchInRangePrev
 
 
 " Integration into SearchRepeat.vim
