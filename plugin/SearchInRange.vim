@@ -1,52 +1,17 @@
 " SearchInRange.vim: Limit search to range when jumping to the next search
 " result. 
 "
-" DESCRIPTION:
-" USAGE:
-":[range]SearchInRange 	Search forward to the first occurrence of the current
-"			search pattern inside [range]. Limit search to lines
-"			inside [range] when jumping to the next search result. 
-":[range]SearchInRange {pattern}
-"			Search for {pattern}, starting with the first occurrence
-"			inside [range]. Limit search to lines inside [range]
-"			when jumping to the next search result. 
-"{Visual}<Leader>/	Jump to the first occurrence of the current search
-"			pattern inside selection. Limit search to lines inside
-"			selection when jumping to the next search result. 
-"<Leader>/{motion}	Use the moved-over lines as a range to limit searches
-"			to. Jump to first occurrence of the current search
-"			pattern inside the range. 
-"
-"   The special searches all start with 'go...' (mnemonic: "go once to special
-"   match"); and come in search forward (ending with lowercase letter) and
-"   search backward (uppercase letter) variants. 
-"
-" [count]gor / goR	Search forward / backward to the [count]'th occurrence
-"			of the current search result in the previously specified
-"			range. 
-"
-"   If the SearchRepeat plugin is installed, a parallel set of "go now and for
-"   next searches" mappings (starting with 'gn...' instead of 'go...') is
-"   installed. These mappings have the same effect, but in addition re-program
-"   the 'n/N' keys to repeat this particular search (until another gn... search
-"   is used). 
-"
-" INSTALLATION:
 " DEPENDENCIES:
 "   - EchoWithoutScrolling.vim autoload script. 
 "   - SearchRepeat.vim autoload script (optional integration). 
 "
-" CONFIGURATION:
-" INTEGRATION:
-" LIMITATIONS:
-" ASSUMPTIONS:
-" KNOWN PROBLEMS:
-" TODO:
-"   - Optionally highlight range. 
+" Copyright: (C) 2008-2012 Ingo Karkat
+"   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	013	14-Mar-2012	Split off documentation.
 "	012	30-Sep-2011	Use <silent> for <Plug> mapping instead of
 "				default mapping. 
 "	011	13-Jul-2010	ENH: Now handling [count]. 
