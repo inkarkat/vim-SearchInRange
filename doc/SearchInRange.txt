@@ -1,0 +1,114 @@
+*SearchInRange.txt*     Limit search to range when jumping to the next search result.
+
+		       SEARCH IN RANGE    by Ingo Karkat
+							   *SearchInRange.vim*
+description			|SearchInRange-description|
+usage				|SearchInRange-usage|
+installation			|SearchInRange-installation|
+configuration			|SearchInRange-configuration|
+integration			|SearchInRange-integration|
+limitations			|SearchInRange-limitations|
+known problems			|SearchInRange-known-problems|
+todo				|SearchInRange-todo|
+history				|SearchInRange-history|
+
+==============================================================================
+DESCRIPTION				       *SearchInRange-description*
+
+This plugin ...
+
+HOW IT WORKS								     *
+
+RELATED WORKS								     *
+
+- range-search (vimscript #1396) defines a :R command.
+
+==============================================================================
+USAGE						     *SearchInRange-usage*
+
+							      *:SearchInRange*
+:[range]SearchInRange 	Search forward to the first occurrence of the current
+			search pattern inside [range]. Limit search to lines
+			inside [range] when jumping to the next search result.
+:[range]SearchInRange {pattern}
+			Search for {pattern}, starting with the first occurrence
+			inside [range]. Limit search to lines inside [range]
+			when jumping to the next search result.
+								 *v_<Leader>/*
+{Visual}<Leader>/	Jump to the first occurrence of the current search
+			pattern inside selection. Limit search to lines inside
+			selection when jumping to the next search result.
+								   *<Leader>/*
+<Leader>/{motion}	Use the moved-over lines as a range to limit searches
+			to. Jump to first occurrence of the current search
+			pattern inside the range.
+
+
+The special searches all start with 'go...' (mnemonic: "go once to special
+match"); and come in search forward (ending with lowercase letter) and search
+backward (uppercase letter) variants.
+								   *gor* *goR*
+[count]gor / goR	Search forward / backward to the [count]'th occurrence
+			of the current search result in the previously specified
+			range.
+
+==============================================================================
+INSTALLATION				      *SearchInRange-installation*
+
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the |:UseVimball| command. >
+    vim SearchInRange.vba.gz
+    :so %
+To uninstall, use the |:RmVimball| command.
+
+DEPENDENCIES				      *SearchInRange-dependencies*
+
+- Requires Vim 7.0 or higher.
+
+==============================================================================
+CONFIGURATION				     *SearchInRange-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+
+						*g:SearchInRange_MyOption*
+To change the default TODO from FOO to BAR, use: >
+    let g:SearchInRange_MyOption = 'BAR'
+<
+==============================================================================
+INTEGRATION				       *SearchInRange-integration*
+
+If the SearchRepeat plugin is installed, a parallel set of "go now and for
+next searches" mappings (starting with 'gn...' instead of 'go...') is
+installed. These mappings have the same effect, but in addition re-program the
+'n/N' keys to repeat this particular search (until another gn... search is
+used).
+
+==============================================================================
+LIMITATIONS				       *SearchInRange-limitations*
+
+KNOWN PROBLEMS				    *SearchInRange-known-problems*
+
+TODO						      *SearchInRange-todo*
+
+- Optionally highlight range.
+
+IDEAS						     *SearchInRange-ideas*
+
+==============================================================================
+HISTORY						   *SearchInRange-history*
+
+GOAL
+First published version.
+
+0.01	07-Aug-2008
+Started development.
+
+==============================================================================
+Copyright: (C) 2008-2012 Ingo Karkat
+The VIM LICENSE applies to this script; see |copyright|.
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
