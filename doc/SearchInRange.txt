@@ -35,12 +35,12 @@ USAGE						     *SearchInRange-usage*
 			inside [range]. Limit search to lines inside [range]
 			when jumping to the next search result.
 								 *v_<Leader>/*
-{Visual}<Leader>/	Jump to the first occurrence of the current search
+{Visual}<Leader>/	Jump to the first occurrence of the last search
 			pattern inside selection. Limit search to lines inside
 			selection when jumping to the next search result.
 								   *<Leader>/*
 <Leader>/{motion}	Use the moved-over lines as a range to limit searches
-			to. Jump to first occurrence of the current search
+			to. Jump to first occurrence of the last search
 			pattern inside the range.
 
 
@@ -49,7 +49,7 @@ match"); and come in search forward (ending with lowercase letter) and search
 backward (uppercase letter) variants.
 								   *gor* *goR*
 [count]gor / goR	Search forward / backward to the [count]'th occurrence
-			of the current search result in the previously specified
+			of the last search pattern in the previously specified
 			range.
 
 ==============================================================================
