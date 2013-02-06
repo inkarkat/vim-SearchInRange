@@ -1,53 +1,55 @@
 " SearchInRange.vim: Limit search to range when jumping to the next search
-" result. 
+" result.
 "
 " DEPENDENCIES:
-"   - EchoWithoutScrolling.vim autoload script. 
-"   - SearchRepeat.vim autoload script (optional integration). 
+"   - EchoWithoutScrolling.vim autoload script.
+"   - SearchRepeat.vim autoload script (optional integration).
 "
 " Copyright: (C) 2008-2012 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
-" REVISION	DATE		REMARKS 
+" REVISION	DATE		REMARKS
+"	014	24-Jun-2012	Don't define the <Leader>/ default mapping in
+"				select mode, just visual mode.
 "	013	14-Mar-2012	Split off documentation.
 "	012	30-Sep-2011	Use <silent> for <Plug> mapping instead of
-"				default mapping. 
-"	011	13-Jul-2010	ENH: Now handling [count]. 
+"				default mapping.
+"	011	13-Jul-2010	ENH: Now handling [count].
 "				BUG: Fixed mixed up "skipping to TOP/BOTTOM of
-"				range" message when the search wraps around. 
+"				range" message when the search wraps around.
 "				Make s:startLine a buffer variable, so that the
-"				range is remembered for each buffer separately. 
+"				range is remembered for each buffer separately.
 "				(Linking this to the window doesn't make sense,
 "				as the fixed range probably won't apply to a
 "				different buffer shown in the same window, and
 "				one can easily re-set the range for any new
-"				buffer.) 
+"				buffer.)
 "	010	13-Jul-2010	Refactored so that error / wrap / echo message
 "				output is done at the end of the script, not
-"				inside the logic. 
+"				inside the logic.
 "				ENH: The search adds the original cursor
 "				position to the jump list, like the built-in
-"				[/?*#nN] commands. 
+"				[/?*#nN] commands.
 "	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
-"				Undefined variable: b:startLine". 
-"	008	17-Aug-2009	Added a:description to SearchRepeat#Register(). 
+"				Undefined variable: b:startLine".
+"	008	17-Aug-2009	Added a:description to SearchRepeat#Register().
 "	007	29-May-2009	Added "go once" mappings that do not integrate
-"				into SearchRepeat.vim. 
+"				into SearchRepeat.vim.
 "	006	15-May-2009	BF: Translating line breaks in search pattern
 "				via EchoWithoutScrolling#TranslateLineBreaks()
 "				to avoid echoing only the last part of the
-"				search pattern when it contains line breaks. 
+"				search pattern when it contains line breaks.
 "	005	06-May-2009	Added a:relatedCommands to
-"				SearchRepeat#Register(). 
-"	004	11-Feb-2009	Now setting v:warningmsg on warnings. 
+"				SearchRepeat#Register().
+"	004	11-Feb-2009	Now setting v:warningmsg on warnings.
 "	003	03-Feb-2009	Added activation mapping to SearchRepeat
-"				registration. 
-"	002	16-Jan-2009	Now setting v:errmsg on errors. 
+"				registration.
+"	002	16-Jan-2009	Now setting v:errmsg on errors.
 "	001	07-Aug-2008	file creation
 
-" Avoid installing twice or when in unsupported Vim version. 
+" Avoid installing twice or when in unsupported Vim version.
 if exists('g:loaded_SearchInRange') || (v:version < 700)
     finish
 endif
@@ -105,16 +107,16 @@ function! s:SearchInRange( isBackward )
 
 	let l:line = search( @/, (a:isBackward ? 'b' : '') )
 	if l:line == 0
-	    " No match, not even outside the range. 
+	    " No match, not even outside the range.
 	    let l:message = ['error', 'Pattern not found: ' . @/]
 	else
 	    if ! a:isBackward && (l:line < b:startLine || l:line > b:endLine)
-		" We moved outside the range, restart at start of range. 
+		" We moved outside the range, restart at start of range.
 		call s:MoveToRangeStart()
 		let l:line = search( @/, '' )
 
 		if l:line > b:endLine
-		    " Only matches outside of range. 
+		    " Only matches outside of range.
 		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
 		else
 		    if l:prevLine > b:endLine
@@ -124,12 +126,12 @@ function! s:SearchInRange( isBackward )
 		    endif
 		endif
 	    elseif a:isBackward && (l:line < b:startLine || l:line > b:endLine)
-		" We moved outside the range, restart at end of range. 
+		" We moved outside the range, restart at end of range.
 		call s:MoveToRangeEnd()
 		let l:line = search( @/, 'b' )
 
 		if l:line < b:startLine
-		    " Only matches outside of range. 
+		    " Only matches outside of range.
 		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
 		else
 		    if l:prevLine < b:startLine
@@ -141,7 +143,7 @@ function! s:SearchInRange( isBackward )
 	    else
 		" We're inside the range, check for movements from outside the range
 		" and for wrapping inside the range (which can lead to here if all
-		" matches are inside the range). 
+		" matches are inside the range).
 		if l:prevLine < b:startLine || l:prevLine > b:endLine
 		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range' : 'skipping to TOP of range')]
 		elseif ! a:isBackward && l:line < l:prevLine
@@ -162,15 +164,15 @@ function! s:SearchInRange( isBackward )
 
     let l:matchPosition = getpos('.')
 
-    " Open fold at the search result, like the built-in commands. 
+    " Open fold at the search result, like the built-in commands.
     normal! zv
 
     " Add the original cursor position to the jump list, like the [/?*#nN]
-    " commands. 
+    " commands.
     " Implementation: Memorize the match position, restore the view to the state
     " before the search, then jump straight back to the match position. This
     " also allows us to set a jump only if a match was found. (:call
-    " setpos("''", ...) doesn't work in Vim 7.2) 
+    " setpos("''", ...) doesn't work in Vim 7.2)
     call winrestview(l:save_view)
     normal! m'
     call setpos('.', l:matchPosition)
@@ -203,7 +205,7 @@ command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line
 "- mappings -------------------------------------------------------------------
 vnoremap <silent> <Plug>SearchInRange :SearchInRange<CR>
 if ! hasmapto('<Plug>SearchInRange', 'v')
-    vmap <Leader>/ <Plug>SearchInRange
+    xmap <Leader>/ <Plug>SearchInRange
 endif
 
 
@@ -227,7 +229,7 @@ nmap goR <Plug>SearchInRangePrev
 try
     " The user might have mapped these to something else; the only way to be
     " sure would be to grep the :map output. We just include the mapping if it's
-    " the default one; the user could re-register, anyway. 
+    " the default one; the user could re-register, anyway.
     let s:mapping = (exists('mapleader') ? mapleader : '\') . '/'
     let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>SearchInRangeOperator' ? s:mapping : '')
 
