@@ -5,7 +5,6 @@
 description			|SearchInRange-description|
 usage				|SearchInRange-usage|
 installation			|SearchInRange-installation|
-configuration			|SearchInRange-configuration|
 integration			|SearchInRange-integration|
 limitations			|SearchInRange-limitations|
 known problems			|SearchInRange-known-problems|
@@ -56,26 +55,18 @@ backward (uppercase letter) variants.
 INSTALLATION				      *SearchInRange-installation*
 
 This script is packaged as a |vimball|. If you have the "gunzip" decompressor
-in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
 the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
 vimball or via the |:UseVimball| command. >
-    vim SearchInRange.vba.gz
+    vim SearchInRange*.vmb.gz
     :so %
 To uninstall, use the |:RmVimball| command.
 
 DEPENDENCIES				      *SearchInRange-dependencies*
 
 - Requires Vim 7.0 or higher.
+- SearchRepeat.vim (vimscript #0000) plugin (optional)
 
-==============================================================================
-CONFIGURATION				     *SearchInRange-configuration*
-
-For a permanent configuration, put the following commands into your |vimrc|:
-
-						*g:SearchInRange_MyOption*
-To change the default TODO from FOO to BAR, use: >
-    let g:SearchInRange_MyOption = 'BAR'
-<
 ==============================================================================
 INTEGRATION				       *SearchInRange-integration*
 
