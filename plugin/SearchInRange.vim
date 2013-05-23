@@ -204,7 +204,7 @@ command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line
 
 "- mappings -------------------------------------------------------------------
 vnoremap <silent> <Plug>SearchInRange :SearchInRange<CR>
-if ! hasmapto('<Plug>SearchInRange', 'v')
+if ! hasmapto('<Plug>SearchInRange', 'x')
     xmap <Leader>/ <Plug>SearchInRange
 endif
 
