@@ -5,12 +5,15 @@
 "   - EchoWithoutScrolling.vim autoload script.
 "   - SearchRepeat.vim autoload script (optional integration).
 "
-" Copyright: (C) 2008-2012 Ingo Karkat
+" Copyright: (C) 2008-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	015	24-May-2013	Change <Leader>/ to <Leader>n; / implies
+"				entering a new pattern, whereas n is related to
+"				the last search pattern, also in [n.
 "	014	24-Jun-2012	Don't define the <Leader>/ default mapping in
 "				select mode, just visual mode.
 "	013	14-Mar-2012	Split off documentation.
@@ -205,7 +208,7 @@ command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line
 "- mappings -------------------------------------------------------------------
 vnoremap <silent> <Plug>SearchInRange :SearchInRange<CR>
 if ! hasmapto('<Plug>SearchInRange', 'x')
-    xmap <Leader>/ <Plug>SearchInRange
+    xmap <Leader>n <Plug>SearchInRange
 endif
 
 
@@ -214,7 +217,7 @@ function! s:SearchInRangeOperator( type )
 endfunction
 nnoremap <silent> <Plug>SearchInRangeOperator :set opfunc=<SID>SearchInRangeOperator<CR>g@
 if ! hasmapto('<Plug>SearchInRangeOperator', 'n')
-    nmap <Leader>/ <Plug>SearchInRangeOperator
+    nmap <Leader>n <Plug>SearchInRangeOperator
 endif
 
 
