@@ -2,7 +2,8 @@
 " result.
 "
 " DEPENDENCIES:
-"   - EchoWithoutScrolling.vim autoload script.
+"   - ingo/avoidprompt.vim autoload script
+"   - ingo/msg.vim autoload script
 "   - SearchRepeat.vim autoload script (optional integration).
 "
 " Copyright: (C) 2008-2013 Ingo Karkat
@@ -11,6 +12,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   	016	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
+"				Use ingo#msg#WarningMsg().
 "	015	24-May-2013	Change <Leader>/ to <Leader>n; / implies
 "				entering a new pattern, whereas n is related to
 "				the last search pattern, also in [n.
@@ -61,12 +64,9 @@ let g:loaded_SearchInRange = 1
 "- functions ------------------------------------------------------------------
 function! s:WrapMessage( message )
     if &shortmess !~# 's'
-	echohl WarningMsg
-	let v:warningmsg = a:message
-	echomsg v:warningmsg
-	echohl None
+	call ingo#msg#WarningMsg(a:message)
     else
-	call EchoWithoutScrolling#Echo( ':' . b:startLine . ',' . b:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/) )
+	call ingo#avoidprompt#EchoAsSingleLine(':' . b:startLine . ',' . b:endLine . '/' . @/)
     endif
 endfunction
 function! s:SearchErrorMessage( message )
@@ -97,7 +97,7 @@ function! s:SearchInRange( isBackward )
 
     let l:count = v:count1
     let l:save_view = winsaveview()
-    let l:message = ['echo', ':' . b:startLine . ',' . b:endLine . '/' . EchoWithoutScrolling#TranslateLineBreaks(@/)]
+    let l:message = ['echo', ':' . b:startLine . ',' . b:endLine . '/' . ingo#avoidprompt#TranslateLineBreaks(@/)]
 
     while l:count > 0 && l:message[0] !=# 'error'
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
@@ -183,7 +183,7 @@ function! s:SearchInRange( isBackward )
     if l:message[0] ==# 'wrap'
 	call s:WrapMessage(l:message[1])
     elseif l:message[0] ==# 'echo'
-	call EchoWithoutScrolling#Echo(l:message[1])
+	call ingo#avoidprompt#Echo(l:message[1])
     endif
 
     return 1
