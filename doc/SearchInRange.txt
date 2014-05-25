@@ -21,6 +21,9 @@ HOW IT WORKS								     *
 RELATED WORKS								     *
 
 - range-search (vimscript #1396) defines a :R command.
+- vis.vim (vimscript #1195) defines a :S command and // and ?? mappings. It
+  works by modifying the search pattern to add restrictions for lines and
+  columns.
 
 ==============================================================================
 USAGE						     *SearchInRange-usage*
