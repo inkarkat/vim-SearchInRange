@@ -1,17 +1,20 @@
-" SearchInRange.vim: Limit search to range when jumping to the next search
-" result.
+" SearchInRange.vim: Limit search to range when jumping to the next search result.
 "
 " DEPENDENCIES:
-"   - ingo/avoidprompt.vim autoload script
-"   - ingo/msg.vim autoload script
-"   - SearchRepeat.vim autoload script (optional integration).
+"   - SearchInRange.vim autoload script
+"   - ingo/err.vim autoload script
+"   - SearchRepeat.vim autoload script (optional integration)
 "
-" Copyright: (C) 2008-2013 Ingo Karkat
+" Copyright: (C) 2008-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	017	26-Apr-2014	Split off autoload script.
+"				Abort on errors.
+"				Use :map-expr for the operator to also allow a
+"				[count] before it.
 "   	016	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
 "				Use ingo#msg#WarningMsg().
 "	015	24-May-2013	Change <Leader>/ to <Leader>n; / implies
@@ -61,168 +64,25 @@ if exists('g:loaded_SearchInRange') || (v:version < 700)
 endif
 let g:loaded_SearchInRange = 1
 
-"- functions ------------------------------------------------------------------
-function! s:WrapMessage( message )
-    if &shortmess !~# 's'
-	call ingo#msg#WarningMsg(a:message)
-    else
-	call ingo#avoidprompt#EchoAsSingleLine(':' . b:startLine . ',' . b:endLine . '/' . @/)
-    endif
-endfunction
-function! s:SearchErrorMessage( message )
-    echohl ErrorMsg
-    let v:errmsg = 'E486: ' . a:message
-    echomsg v:errmsg
-    echohl None
-endfunction
-function! s:NoRangeErrorMessage()
-    echohl ErrorMsg
-    let v:errmsg = 'Define range with :SearchInRange first!'
-    echomsg v:errmsg
-    echohl None
-endfunction
-
-function! s:MoveToRangeStart()
-    call cursor(b:startLine, 1)
-endfunction
-function! s:MoveToRangeEnd()
-    call cursor(b:endLine, 1)
-    call cursor(b:endLine, col('$'))
-endfunction
-function! s:SearchInRange( isBackward )
-    if ! exists('b:startLine') || ! exists('b:endLine')
-	call s:NoRangeErrorMessage()
-	return 0
-    endif
-
-    let l:count = v:count1
-    let l:save_view = winsaveview()
-    let l:message = ['echo', ':' . b:startLine . ',' . b:endLine . '/' . ingo#avoidprompt#TranslateLineBreaks(@/)]
-
-    while l:count > 0 && l:message[0] !=# 'error'
-	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
-
-	if l:prevLine < b:startLine
-	    call s:MoveToRangeStart()
-	elseif l:prevLine > b:endLine
-	    call s:MoveToRangeEnd()
-	endif
-
-	let l:line = search( @/, (a:isBackward ? 'b' : '') )
-	if l:line == 0
-	    " No match, not even outside the range.
-	    let l:message = ['error', 'Pattern not found: ' . @/]
-	else
-	    if ! a:isBackward && (l:line < b:startLine || l:line > b:endLine)
-		" We moved outside the range, restart at start of range.
-		call s:MoveToRangeStart()
-		let l:line = search( @/, '' )
-
-		if l:line > b:endLine
-		    " Only matches outside of range.
-		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
-		else
-		    if l:prevLine > b:endLine
-			let l:message = ['wrap', 'skipping to TOP of range']
-		    else
-			let l:message = ['wrap', 'search hit BOTTOM of range, continuing at TOP']
-		    endif
-		endif
-	    elseif a:isBackward && (l:line < b:startLine || l:line > b:endLine)
-		" We moved outside the range, restart at end of range.
-		call s:MoveToRangeEnd()
-		let l:line = search( @/, 'b' )
-
-		if l:line < b:startLine
-		    " Only matches outside of range.
-		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
-		else
-		    if l:prevLine < b:startLine
-			let l:message = ['wrap', 'skipping to BOTTOM of range']
-		    else
-			let l:message = ['wrap', 'search hit TOP of range, continuing at BOTTOM']
-		    endif
-		endif
-	    else
-		" We're inside the range, check for movements from outside the range
-		" and for wrapping inside the range (which can lead to here if all
-		" matches are inside the range).
-		if l:prevLine < b:startLine || l:prevLine > b:endLine
-		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range' : 'skipping to TOP of range')]
-		elseif ! a:isBackward && l:line < l:prevLine
-		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
-		elseif a:isBackward && l:line > l:prevLine
-		    let l:message = ['wrap', 'search hit TOP, continuing at BOTTOM']
-		endif
-	    endif
-	endif
-	let l:count -= 1
-    endwhile
-
-    if l:message[0] ==# 'error'
-	call s:SearchErrorMessage(l:message[1])
-	call cursor(l:prevLine, l:prevCol)
-	return 0
-    endif
-
-    let l:matchPosition = getpos('.')
-
-    " Open fold at the search result, like the built-in commands.
-    normal! zv
-
-    " Add the original cursor position to the jump list, like the [/?*#nN]
-    " commands.
-    " Implementation: Memorize the match position, restore the view to the state
-    " before the search, then jump straight back to the match position. This
-    " also allows us to set a jump only if a match was found. (:call
-    " setpos("''", ...) doesn't work in Vim 7.2)
-    call winrestview(l:save_view)
-    normal! m'
-    call setpos('.', l:matchPosition)
-
-    if l:message[0] ==# 'wrap'
-	call s:WrapMessage(l:message[1])
-    elseif l:message[0] ==# 'echo'
-	call ingo#avoidprompt#Echo(l:message[1])
-    endif
-
-    return 1
-endfunction
-
 "- commands -------------------------------------------------------------------
-function! s:SetAndSearchInRange( startLine, endLine, pattern )
-    let b:startLine = a:startLine
-    let b:endLine = a:endLine
-    if ! empty(a:pattern)
-	let @/ = a:pattern
-    endif
 
-    " Integration into SearchRepeat.vim
-    silent! call SearchRepeat#Set("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 2)<CR>
-
-    return s:SearchInRange(0)
-endfunction
-command! -nargs=? -range SearchInRange if <SID>SetAndSearchInRange(<line1>,<line2>,<q-args>) && &hlsearch|set hlsearch|endif
+command! -nargs=? -range SearchInRange if SearchInRange#SetAndSearchInRange(<line1>,<line2>,<q-args>) | if &hlsearch | set hlsearch | endif | else | echoerr ingo#err#Get() | endif
 
 
 "- mappings -------------------------------------------------------------------
+
 vnoremap <silent> <Plug>SearchInRange :SearchInRange<CR>
 if ! hasmapto('<Plug>SearchInRange', 'x')
     xmap <Leader>n <Plug>SearchInRange
 endif
 
-
-function! s:SearchInRangeOperator( type )
-    call s:SetAndSearchInRange(line("'["), line("']"), '')
-endfunction
-nnoremap <silent> <Plug>SearchInRangeOperator :set opfunc=<SID>SearchInRangeOperator<CR>g@
+nnoremap <expr> <Plug>SearchInRangeOperator SearchInRange#OperatorExpr()
 if ! hasmapto('<Plug>SearchInRangeOperator', 'n')
     nmap <Leader>n <Plug>SearchInRangeOperator
 endif
 
-
-nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if <SID>SearchInRange(0) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
-nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if <SID>SearchInRange(1) && &hlsearch<Bar>set hlsearch<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if SearchInRange#SearchInRange(0)<Bar>if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if SearchInRange#SearchInRange(1)<Bar>if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 
 nmap gor <Plug>SearchInRangeNext
 nmap goR <Plug>SearchInRangePrev
