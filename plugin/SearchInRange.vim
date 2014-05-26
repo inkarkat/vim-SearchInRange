@@ -11,6 +11,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.018	26-May-2014	Adapt <Plug>-mapping naming.
+"				Make go... mappings configurable.
+"				Adapt to polished SearchRepeat interface.
 "	017	26-Apr-2014	Split off autoload script.
 "				Abort on errors.
 "				Use :map-expr for the operator to also allow a
@@ -63,6 +66,8 @@ if exists('g:loaded_SearchInRange') || (v:version < 700)
     finish
 endif
 let g:loaded_SearchInRange = 1
+let s:save_cpo = &cpo
+set cpo&vim
 
 "- commands -------------------------------------------------------------------
 
@@ -71,38 +76,46 @@ command! -nargs=? -range SearchInRange if SearchInRange#SetAndSearchInRange(<lin
 
 "- mappings -------------------------------------------------------------------
 
-vnoremap <silent> <Plug>SearchInRange :SearchInRange<CR>
-if ! hasmapto('<Plug>SearchInRange', 'x')
-    xmap <Leader>n <Plug>SearchInRange
+vnoremap <silent> <Plug>(SearchInRange) :SearchInRange<CR>
+if ! hasmapto('<Plug>(SearchInRange)', 'x')
+    xmap <Leader>n <Plug>(SearchInRange)
 endif
 
-nnoremap <expr> <Plug>SearchInRangeOperator SearchInRange#OperatorExpr()
-if ! hasmapto('<Plug>SearchInRangeOperator', 'n')
-    nmap <Leader>n <Plug>SearchInRangeOperator
+nnoremap <expr> <Plug>(SearchInRangeOperator) SearchInRange#OperatorExpr()
+if ! hasmapto('<Plug>(SearchInRangeOperator)', 'n')
+    nmap <Leader>n <Plug>(SearchInRangeOperator)
 endif
 
-nnoremap <silent> <Plug>SearchInRangeNext :<C-u>if SearchInRange#SearchInRange(0)<Bar>if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
-nnoremap <silent> <Plug>SearchInRangePrev :<C-u>if SearchInRange#SearchInRange(1)<Bar>if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>(SearchInRangeNext) :<C-u>if SearchInRange#SearchInRange(0)<Bar>if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>(SearchInRangePrev) :<C-u>if SearchInRange#SearchInRange(1)<Bar>if &hlsearch<Bar>set hlsearch<Bar>endif<Bar>else<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 
-nmap gor <Plug>SearchInRangeNext
-nmap goR <Plug>SearchInRangePrev
+if ! hasmapto('<Plug>(SearchInRangeNext)', 'n')
+    nmap gor <Plug>(SearchInRangeNext)
+endif
+if ! hasmapto('<Plug>(SearchInRangePrev)', 'n')
+    nmap goR <Plug>(SearchInRangePrev)
+endif
 
 
-" Integration into SearchRepeat.vim
+"- Integration into SearchRepeat.vim -------------------------------------------
+
 try
     " The user might have mapped these to something else; the only way to be
     " sure would be to grep the :map output. We just include the mapping if it's
     " the default one; the user could re-register, anyway.
     let s:mapping = (exists('mapleader') ? mapleader : '\') . '/'
-    let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>SearchInRangeOperator' ? s:mapping : '')
+    let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>(SearchInRangeOperator)' ? s:mapping : '')
 
-    call SearchRepeat#Register("\<Plug>SearchInRangeNext", s:mapping, 'gnr', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]')
-    call SearchRepeat#Register("\<Plug>SearchInRangePrev", '', 'gnR', '?range?', 'Search backward in range', '')
-    nnoremap <silent> gnr :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 2)<CR>
-    nnoremap <silent> gnR :<C-u>call SearchRepeat#Execute("\<Plug>SearchInRangePrev", "\<Plug>SearchInRangeNext", 2)<CR>
+    call SearchRepeat#Define(
+    \   "\<Plug>(SearchInRangeNext)", s:mapping, 'r', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]',
+    \   "\<Plug>(SearchInRangePrev)", '',        'R', '?range?', 'Search backward in range', '',
+    \   2
+    \)
 catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
 finally
     unlet! s:mapping
 endtry
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
