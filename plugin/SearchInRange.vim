@@ -107,8 +107,8 @@ try
     let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>(SearchInRangeOperator)' ? s:mapping : '')
 
     call SearchRepeat#Define(
-    \   "\<Plug>(SearchInRangeNext)", s:mapping, 'r', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]',
-    \   "\<Plug>(SearchInRangePrev)", '',        'R', '?range?', 'Search backward in range', '',
+    \   '<Plug>(SearchInRangeNext)', s:mapping, 'r', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]',
+    \   '<Plug>(SearchInRangePrev)', '',        'R', '?range?', 'Search backward in range', '',
     \   2
     \)
 catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
