@@ -12,6 +12,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"	018	26-May-2014	Adapt <Plug>-mapping naming.
 "	017	26-Apr-2014	Split off autoload script.
 "				Use ingo#err#Set() to abort on errors.
 "   	016	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
@@ -180,7 +181,7 @@ function! SearchInRange#SetAndSearchInRange( startLine, endLine, pattern )
     endif
 
     " Integration into SearchRepeat.vim
-    silent! call SearchRepeat#Set("\<Plug>SearchInRangeNext", "\<Plug>SearchInRangePrev", 2)<CR>
+    silent! call SearchRepeat#Set("\<Plug>(SearchInRangeNext)", "\<Plug>(SearchInRangePrev)", 2)<CR>
 
     return SearchInRange#SearchInRange(0)
 endfunction
