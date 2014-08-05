@@ -32,10 +32,11 @@ USAGE						     *SearchInRange-usage*
 :[range]SearchInRange 	Search forward to the first occurrence of the current
 			search pattern inside [range]. Limit search to lines
 			inside [range] when jumping to the next search result.
-:[range]SearchInRange {pattern}
+:[range]SearchInRange [/]{pattern}[/]
 			Search for {pattern}, starting with the first occurrence
 			inside [range]. Limit search to lines inside [range]
-			when jumping to the next search result.
+			when jumping to the next search result. Without [/],
+			only literal whole words are matched. |:search-args|
 								 *v_<Leader>/*
 {Visual}<Leader>/	Jump to the first occurrence of the last search
 			pattern inside selection. Limit search to lines inside
@@ -68,6 +69,8 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES				      *SearchInRange-dependencies*
 
 - Requires Vim 7.0 or higher.
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.020 or
+  higher.
 - SearchRepeat.vim (vimscript #4949) plugin (optional)
 
 ==============================================================================
