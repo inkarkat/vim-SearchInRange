@@ -11,6 +11,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.019	29-May-2014	Also allow :[range]SearchInRange /{pattern}/
+"				argument syntax with literal whole word search.
 "   1.00.018	26-May-2014	Adapt <Plug>-mapping naming.
 "				Make go... mappings configurable.
 "				Adapt to polished SearchRepeat interface.
@@ -107,7 +109,7 @@ try
     let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>(SearchInRangeOperator)' ? s:mapping : '')
 
     call SearchRepeat#Define(
-    \   '<Plug>(SearchInRangeNext)', s:mapping, 'r', '/range/', 'Search forward in range', ':[range]SearchInRange [{pattern}]',
+    \   '<Plug>(SearchInRangeNext)', s:mapping, 'r', '/range/', 'Search forward in range', ':[range]SearchInRange [/][{pattern}][/]',
     \   '<Plug>(SearchInRangePrev)', '',        'R', '?range?', 'Search backward in range', '',
     \   2
     \)
