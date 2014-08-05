@@ -12,6 +12,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.00.019	29-May-2014	Use
+"				ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord()
+"				to also allow :[range]SearchInRange /{pattern}/
+"				argument syntax with literal whole word search.
 "	018	26-May-2014	Adapt <Plug>-mapping naming.
 "	017	26-Apr-2014	Split off autoload script.
 "				Use ingo#err#Set() to abort on errors.
@@ -174,10 +178,11 @@ function! SearchInRange#SearchInRange( isBackward )
 endfunction
 
 function! SearchInRange#SetAndSearchInRange( startLine, endLine, pattern )
+    let l:pattern = ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(a:pattern)
     let b:startLine = a:startLine
     let b:endLine = a:endLine
-    if ! empty(a:pattern)
-	let @/ = a:pattern
+    if ! empty(l:pattern)
+	let @/ = l:pattern
     endif
 
     " Integration into SearchRepeat.vim
