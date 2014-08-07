@@ -2,6 +2,8 @@
 "
 " DEPENDENCIES:
 "   - ingo/avoidprompt.vim autoload script
+"   - ingo/cmdargs/pattern.vim autoload script
+"   - ingo/collections/unique.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/msg.vim autoload script
 "   - SearchRepeat.vim autoload script (optional integration)
@@ -177,10 +179,49 @@ function! SearchInRange#SearchInRange( isBackward )
     return 1
 endfunction
 
-function! SearchInRange#SetAndSearchInRange( startLine, endLine, pattern )
+
+function! s:AddRange( variable, startLnum, endLnum, range )
+    if empty(a:range)
+	let l:range = (a:startLnum == a:endLnum ? a:startLnum : a:startLnum . ',' . a:endLnum)
+	execute "call ingo#collections#unique#AddNew(" . a:variable . ", l:range)"
+    else
+	if a:startLnum != a:endLnum
+	    " Ranges are given both before and after the command; add both.
+	    execute "call ingo#collections#unique#AddNew(" . a:variable . ", a:startLnum . ',' . a:endLnum)"
+	endif
+	execute "call ingo#collections#unique#AddNew(" . a:variable . ", a:range)"
+    endif
+endfunction
+function! SearchInRange#Include( startLnum, endLnum, range )
+    if ! exists('b:SearchInRange_Include')
+	let b:SearchInRange_Include = []
+    endif
+    call s:AddRange('b:SearchInRange_Include', a:startLnum, a:endLnum, a:range)
+    return 1
+endfunction
+function! SearchInRange#Exclude( startLnum, endLnum, range )
+    if ! exists('b:SearchExRange_Exclude')
+	let b:SearchExRange_Exclude = []
+    endif
+    call s:AddRange('b:SearchExRange_Exclude', a:startLnum, a:endLnum, a:range)
+    return 1
+endfunction
+function! SearchInRange#Clear()
+    if ! exists('b:SearchInRange_Include') && ! exists('b:SearchInRange_Exclude')
+	call ingo#err#Set('No ranges defined')
+	return 0
+    endif
+
+    unlet! b:SearchInRange_Include
+    unlet! b:SearchInRange_Exclude
+    return 1
+endfunction
+function! SearchInRange#SetAndSearchInRange( startLnum, endLnum, pattern )
     let l:pattern = ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(a:pattern)
-    let b:startLine = a:startLine
-    let b:endLine = a:endLine
+
+    let b:SearchInRange_Include = [a:startLnum . ',' . a:endLnum]
+    unlet! b:SearchInRange_Exclude
+
     if ! empty(l:pattern)
 	let @/ = l:pattern
     endif
@@ -189,10 +230,6 @@ function! SearchInRange#SetAndSearchInRange( startLine, endLine, pattern )
     silent! call SearchRepeat#Set("\<Plug>(SearchInRangeNext)", "\<Plug>(SearchInRangePrev)", 2)<CR>
 
     return SearchInRange#SearchInRange(0)
-endfunction
-function! SearchInRange#Add( startLine, endLine, range )
-endfunction
-function! SearchInRange#Remove( isForce, startLine, endLine, range )
 endfunction
 
 
