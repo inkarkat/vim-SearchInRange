@@ -190,6 +190,10 @@ function! SearchInRange#SetAndSearchInRange( startLine, endLine, pattern )
 
     return SearchInRange#SearchInRange(0)
 endfunction
+function! SearchInRange#Add( startLine, endLine, range )
+endfunction
+function! SearchInRange#Remove( isForce, startLine, endLine, range )
+endfunction
 
 
 function! SearchInRange#Operator( type )
