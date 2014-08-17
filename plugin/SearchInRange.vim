@@ -73,9 +73,10 @@ set cpo&vim
 
 "- commands -------------------------------------------------------------------
 
-command!      -nargs=? -range SearchInRange if SearchInRange#SetAndSearchInRange(<line1>, <line2>, <q-args>) | if &hlsearch | set hlsearch | endif | else | echoerr ingo#err#Get() | endif
-command!      -nargs=? -range SearchInRangeAdd    if ! SearchInRange#Add(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
-command! -bar -nargs=? -range SearchInRangeRemove if ! SearchInRange#Remove(<bang>0, <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command! -nargs=? -range SearchInRange        if SearchInRange#SetAndSearchInRange(<line1>, <line2>, <q-args>) | if &hlsearch | set hlsearch | endif | else | echoerr ingo#err#Get() | endif
+command! -nargs=? -range SearchInRangeInclude if ! SearchInRange#Include(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command! -nargs=? -range SearchInRangeExclude if ! SearchInRange#Exclude(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command! -bar            SearchInRangeClear   if ! SearchInRange#Clear() | echoerr ingo#err#Get() | endif
 
 
 "- mappings -------------------------------------------------------------------
