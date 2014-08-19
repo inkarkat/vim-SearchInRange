@@ -116,7 +116,7 @@ try
     \   '<Plug>(SearchInRangePrev)', '',        'R', '?range?', 'Search backward in range', '',
     \   2
     \)
-catch /^Vim\%((\a\+)\)\=:E117/	" catch error E117: Unknown function
+catch /^Vim\%((\a\+)\)\=:E117:/	" catch error E117: Unknown function
 finally
     unlet! s:mapping
 endtry
