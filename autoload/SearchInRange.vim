@@ -6,6 +6,7 @@
 "   - ingo/collections/unique.vim autoload script
 "   - ingo/err.vim autoload script
 "   - ingo/msg.vim autoload script
+"   - ingo/range.vim autoload script
 "   - SearchRepeat.vim autoload script (optional integration)
 "
 " Copyright: (C) 2008-2014 Ingo Karkat
@@ -14,6 +15,16 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.020	08-Aug-2014	Change b:startLine + b:endLine to
+"				b:SearchInRange_Include and b:SearchInRange_Exclude.
+"				Add SearchInRange#Include(),
+"				SearchInRange#Exclude(), SearchInRange#Clear().
+"				FIX: When moving to start / end of range, must
+"				use "c" search flag to avoid skipping a match
+"				directly at the border.
+"				FIX: Need to explicitly account for closed folds
+"				in the range passed to
+"				SearchInRange#SetAndSearchInRange().
 "   1.00.019	29-May-2014	Use
 "				ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord()
 "				to also allow :[range]SearchInRange /{pattern}/
@@ -64,81 +75,134 @@
 "	002	16-Jan-2009	Now setting v:errmsg on errors.
 "	001	07-Aug-2008	file creation
 
-function! s:WrapMessage( message )
+function! s:DetermineSearchedLines()
+    let l:didClobberSearchHistory = 0
+    let l:lines = {}
+
+    if ! exists('b:SearchInRange_Include') || empty(b:SearchInRange_Include)
+	if ! exists('b:SearchInRange_Exclude') || empty(b:SearchInRange_Exclude)
+	    throw 'No ranges defined'
+	endif
+
+	" Initialize with all lines in the buffer.
+	let l:lines = ingo#collections#ToDict(range(1, line('$')))
+    else
+	for l:range in b:SearchInRange_Include
+	    let [l:recordedLines, l:startLines, l:endLines, l:isClobberSearchHistory] = ingo#range#lines#Get(1, line('$'), l:range)
+	    let l:didClobberSearchHistory = l:didClobberSearchHistory || l:isClobberSearchHistory
+
+	    call extend(l:lines, l:recordedLines, 'keep')
+	endfor
+    endif
+    if exists('b:SearchInRange_Exclude') && ! empty(b:SearchInRange_Exclude)
+	for l:range in b:SearchInRange_Exclude
+	    let [l:recordedLines, l:startLines, l:endLines, l:isClobberSearchHistory] = ingo#range#lines#Get(1, line('$'), l:range)
+	    let l:didClobberSearchHistory = l:didClobberSearchHistory || l:isClobberSearchHistory
+
+	    for l:lnum in keys(l:recordedLines)
+		call remove(l:lines, l:lnum)
+	    endfor
+	endfor
+    endif
+
+    if l:didClobberSearchHistory
+	call histdel('search', -1)
+    endif
+
+    return l:lines
+endfunction
+
+function! s:WrapMessage( rangeMessage, message )
     if &shortmess !~# 's'
 	call ingo#msg#WarningMsg(a:message)
     else
-	call ingo#avoidprompt#EchoAsSingleLine(':' . b:startLine . ',' . b:endLine . '/' . @/)
+	call ingo#avoidprompt#EchoAsSingleLine(':' . a:rangeMessage . '/' . @/)
     endif
 endfunction
 
-function! s:MoveToRangeStart()
-    call cursor(b:startLine, 1)
+function! s:MoveToStart( startLnum )
+    call cursor(a:startLnum, 1)
 endfunction
-function! s:MoveToRangeEnd()
-    call cursor(b:endLine, 1)
-    call cursor(b:endLine, col('$'))
+function! s:MoveToEnd( endLnum )
+    call cursor(a:endLnum, 1)
+    call cursor(a:endLnum, col('$'))
+endfunction
+function! s:GetRangeMessage()
+    let l:hasInclude = (exists('b:SearchInRange_Include') && ! empty(b:SearchInRange_Include))
+    let l:hasExclude = (exists('b:SearchInRange_Exclude') && ! empty(b:SearchInRange_Exclude))
+    let l:message = (l:hasInclude ? join(b:SearchInRange_Include, ' and ') : '%')
+    let l:message .= (l:hasExclude ? ' without ' . join(b:SearchInRange_Exclude, ' and ') : '')
+    return l:message
 endfunction
 function! SearchInRange#SearchInRange( isBackward )
-    if ! exists('b:startLine') || ! exists('b:endLine')
-	call ingo#err#Set('Define range with :SearchInRange first!')
+    if ! exists('b:SearchInRange_Include') && ! exists('b:SearchInRange_Exclude')
+	call ingo#err#Set('Define range with :SearchInRange, :SearchInRangeInclude, or :SearchInRangeExclude first!')
 	return 0
     endif
 
     let l:count = v:count1
     let l:save_view = winsaveview()
-    let l:message = ['echo', ':' . b:startLine . ',' . b:endLine . '/' . ingo#avoidprompt#TranslateLineBreaks(@/)]
+	let l:lines = s:DetermineSearchedLines()
+    call winrestview(l:save_view)
+    let l:startLnum = min(keys(l:lines))
+    let l:endLnum = max(keys(l:lines))
 
+    let l:message = ['echo', ':' . s:GetRangeMessage() . '/' . ingo#avoidprompt#TranslateLineBreaks(@/)]
+    let l:searchFlags = ''
+echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collections#numsort'))
     while l:count > 0 && l:message[0] !=# 'error'
 	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
 
-	if l:prevLine < b:startLine
-	    call s:MoveToRangeStart()
-	elseif l:prevLine > b:endLine
-	    call s:MoveToRangeEnd()
+	if l:prevLine < l:startLnum
+	    call s:MoveToStart(l:startLnum)
+	    let l:searchFlags = 'c'
+	elseif l:prevLine > l:endLnum
+	    call s:MoveToEnd(l:endLnum)
+	    let l:searchFlags = 'c'
 	endif
 
-	let l:line = search( @/, (a:isBackward ? 'b' : '') )
+	let l:line = search(@/, (a:isBackward ? 'b' : '') . l:searchFlags)
+	let l:searchFlags = ''
 	if l:line == 0
 	    " No match, not even outside the range.
 	    let l:message = ['error', 'Pattern not found: ' . @/]
 	else
-	    if ! a:isBackward && (l:line < b:startLine || l:line > b:endLine)
+	    if ! a:isBackward && (l:line < l:startLnum || l:line > l:endLnum)
 		" We moved outside the range, restart at start of range.
-		call s:MoveToRangeStart()
+		call s:MoveToStart(l:startLnum)
 		let l:line = search( @/, '' )
 
-		if l:line > b:endLine
+		if l:line > l:endLnum
 		    " Only matches outside of range.
-		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
+		    let l:message = ['error', 'Pattern not found in ' . s:GetRangeMessage() . ': ' . @/]
 		else
-		    if l:prevLine > b:endLine
-			let l:message = ['wrap', 'skipping to TOP of range']
+		    if l:prevLine > l:endLnum
+			let l:message = ['wrap', 'skipping to TOP of range(s)']
 		    else
-			let l:message = ['wrap', 'search hit BOTTOM of range, continuing at TOP']
+			let l:message = ['wrap', 'search hit BOTTOM of range(s), continuing at TOP']
 		    endif
 		endif
-	    elseif a:isBackward && (l:line < b:startLine || l:line > b:endLine)
+	    elseif a:isBackward && (l:line < l:startLnum || l:line > l:endLnum)
 		" We moved outside the range, restart at end of range.
-		call s:MoveToRangeEnd()
+		call s:MoveToEnd(l:endLnum)
 		let l:line = search( @/, 'b' )
 
-		if l:line < b:startLine
+		if l:line < l:startLnum
 		    " Only matches outside of range.
-		    let l:message = ['error', 'Pattern not found in range ' . b:startLine . ',' . b:endLine . ': ' . @/]
+		    let l:message = ['error', 'Pattern not found in ' . s:GetRangeMessage() . ': ' . @/]
 		else
-		    if l:prevLine < b:startLine
-			let l:message = ['wrap', 'skipping to BOTTOM of range']
+		    if l:prevLine < l:startLnum
+			let l:message = ['wrap', 'skipping to BOTTOM of range(s)']
 		    else
-			let l:message = ['wrap', 'search hit TOP of range, continuing at BOTTOM']
+			let l:message = ['wrap', 'search hit TOP of range(s), continuing at BOTTOM']
 		    endif
 		endif
 	    else
-		" We're inside the range, check for movements from outside the range
-		" and for wrapping inside the range (which can lead to here if all
-		" matches are inside the range).
-		if l:prevLine < b:startLine || l:prevLine > b:endLine
-		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range' : 'skipping to TOP of range')]
+		" We're inside a range, check for movements from outside the
+		" range(s) and for wrapping inside the range (which can lead to
+		" here if all matches are inside the range).
+		if l:prevLine < l:startLnum || l:prevLine > l:endLnum
+		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range(s)' : 'skipping to TOP of range(s)')]
 		elseif ! a:isBackward && l:line < l:prevLine
 		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
 		elseif a:isBackward && l:line > l:prevLine
@@ -171,7 +235,7 @@ function! SearchInRange#SearchInRange( isBackward )
     call setpos('.', l:matchPosition)
 
     if l:message[0] ==# 'wrap'
-	call s:WrapMessage(l:message[1])
+	call s:WrapMessage(s:GetRangeMessage(), l:message[1])
     elseif l:message[0] ==# 'echo'
 	call ingo#avoidprompt#Echo(l:message[1])
     endif
@@ -200,10 +264,10 @@ function! SearchInRange#Include( startLnum, endLnum, range )
     return 1
 endfunction
 function! SearchInRange#Exclude( startLnum, endLnum, range )
-    if ! exists('b:SearchExRange_Exclude')
-	let b:SearchExRange_Exclude = []
+    if ! exists('b:SearchInRange_Exclude')
+	let b:SearchInRange_Exclude = []
     endif
-    call s:AddRange('b:SearchExRange_Exclude', a:startLnum, a:endLnum, a:range)
+    call s:AddRange('b:SearchInRange_Exclude', a:startLnum, a:endLnum, a:range)
     return 1
 endfunction
 function! SearchInRange#Clear()
@@ -219,7 +283,7 @@ endfunction
 function! SearchInRange#SetAndSearchInRange( startLnum, endLnum, pattern )
     let l:pattern = ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(a:pattern)
 
-    let b:SearchInRange_Include = [a:startLnum . ',' . a:endLnum]
+    let b:SearchInRange_Include = [ingo#range#NetStart(a:startLnum) . ',' . ingo#range#NetEnd(a:endLnum)]
     unlet! b:SearchInRange_Exclude
 
     if ! empty(l:pattern)
