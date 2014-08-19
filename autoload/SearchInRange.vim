@@ -15,6 +15,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.021	20-Aug-2014	Implement skipping over gaps between individual
+"				ranges.
 "   2.00.020	08-Aug-2014	Change b:startLine + b:endLine to
 "				b:SearchInRange_Include and b:SearchInRange_Exclude.
 "				Add SearchInRange#Include(),
@@ -134,6 +136,14 @@ function! s:GetRangeMessage()
     let l:message .= (l:hasExclude ? ' without ' . join(b:SearchInRange_Exclude, ' and ') : '')
     return l:message
 endfunction
+function! s:IsSingleRange( lines )
+    let l:lnums = keys(a:lines)
+    let [l:minLnum, l:maxLnum] = [min(l:lnums), max(l:lnums)]
+    return (! empty(a:lines) && len(l:lnums) == l:maxLnum - l:minLnum + 1)
+endfunction
+function! s:GetRangeMultiplicityName( lines )
+    return (s:IsSingleRange(a:lines) ? 'range' : 'ranges')
+endfunction
 function! SearchInRange#SearchInRange( isBackward )
     if ! exists('b:SearchInRange_Include') && ! exists('b:SearchInRange_Exclude')
 	call ingo#err#Set('Define range with :SearchInRange, :SearchInRangeInclude, or :SearchInRangeExclude first!')
@@ -151,7 +161,7 @@ function! SearchInRange#SearchInRange( isBackward )
     let l:searchFlags = ''
 echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collections#numsort'))
     while l:count > 0 && l:message[0] !=# 'error'
-	let [l:prevLine, l:prevCol] = [line('.'), col('.')]
+	let [l:prevLine, l:prevCol] = getpos('.')[1:2]
 
 	if l:prevLine < l:startLnum
 	    call s:MoveToStart(l:startLnum)
@@ -164,7 +174,7 @@ echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collection
 	let l:line = search(@/, (a:isBackward ? 'b' : '') . l:searchFlags)
 	let l:searchFlags = ''
 	if l:line == 0
-	    " No match, not even outside the range.
+	    " No match, not even outside the range(s).
 	    let l:message = ['error', 'Pattern not found: ' . @/]
 	else
 	    if ! a:isBackward && (l:line < l:startLnum || l:line > l:endLnum)
@@ -173,36 +183,41 @@ echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collection
 		let l:line = search( @/, '' )
 
 		if l:line > l:endLnum
-		    " Only matches outside of range.
+		    " Only matches outside of range(s).
 		    let l:message = ['error', 'Pattern not found in ' . s:GetRangeMessage() . ': ' . @/]
 		else
 		    if l:prevLine > l:endLnum
-			let l:message = ['wrap', 'skipping to TOP of range(s)']
+			let l:message = ['wrap', 'skipping to TOP of ' . s:GetRangeMultiplicityName(l:lines)]
 		    else
-			let l:message = ['wrap', 'search hit BOTTOM of range(s), continuing at TOP']
+			let l:message = ['wrap', 'search hit BOTTOM of ' . s:GetRangeMultiplicityName(l:lines) . ', continuing at TOP']
 		    endif
 		endif
 	    elseif a:isBackward && (l:line < l:startLnum || l:line > l:endLnum)
-		" We moved outside the range, restart at end of range.
+		" We moved outside the range(s), restart at end of range(s).
 		call s:MoveToEnd(l:endLnum)
 		let l:line = search( @/, 'b' )
 
 		if l:line < l:startLnum
-		    " Only matches outside of range.
+		    " Only matches outside of range(s).
 		    let l:message = ['error', 'Pattern not found in ' . s:GetRangeMessage() . ': ' . @/]
 		else
 		    if l:prevLine < l:startLnum
-			let l:message = ['wrap', 'skipping to BOTTOM of range(s)']
+			let l:message = ['wrap', 'skipping to BOTTOM of ' . s:GetRangeMultiplicityName(l:lines)]
 		    else
-			let l:message = ['wrap', 'search hit TOP of range(s), continuing at BOTTOM']
+			let l:message = ['wrap', 'search hit TOP of ' . s:GetRangeMultiplicityName(l:lines) . ', continuing at BOTTOM']
 		    endif
 		endif
+	    elseif ! has_key(l:lines, l:line)
+		" We moved outside a range, but still within the overall ranges.
+		let l:message = ['wrap', 'skipping to ' . (a:isBackward ? 'PREVIOUS' : 'NEXT') . ' range']
+		" TODO: Position to next range start
+		continue
 	    else
 		" We're inside a range, check for movements from outside the
 		" range(s) and for wrapping inside the range (which can lead to
 		" here if all matches are inside the range).
 		if l:prevLine < l:startLnum || l:prevLine > l:endLnum
-		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of range(s)' : 'skipping to TOP of range(s)')]
+		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of ' . s:GetRangeMultiplicityName(l:lines) . '' : 'skipping to TOP of ' . s:GetRangeMultiplicityName(l:lines))]
 		elseif ! a:isBackward && l:line < l:prevLine
 		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
 		elseif a:isBackward && l:line > l:prevLine
@@ -245,13 +260,14 @@ endfunction
 
 
 function! s:AddRange( variable, startLnum, endLnum, range )
+    let [l:netStartLnum, l:netEndLnum] = [ingo#range#NetStart(a:startLnum), ingo#range#NetEnd(a:endLnum)]
     if empty(a:range)
-	let l:range = (a:startLnum == a:endLnum ? a:startLnum : a:startLnum . ',' . a:endLnum)
+	let l:range = (l:netStartLnum == l:netEndLnum ? l:netStartLnum : l:netStartLnum . ',' . l:netEndLnum)
 	execute "call ingo#collections#unique#AddNew(" . a:variable . ", l:range)"
     else
 	if a:startLnum != a:endLnum
 	    " Ranges are given both before and after the command; add both.
-	    execute "call ingo#collections#unique#AddNew(" . a:variable . ", a:startLnum . ',' . a:endLnum)"
+	    execute "call ingo#collections#unique#AddNew(" . a:variable . ", l:netStartLnum . ',' . l:netEndLnum)"
 	endif
 	execute "call ingo#collections#unique#AddNew(" . a:variable . ", a:range)"
     endif
