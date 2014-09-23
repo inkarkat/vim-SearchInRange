@@ -14,9 +14,16 @@ history				|SearchInRange-history|
 ==============================================================================
 DESCRIPTION				       *SearchInRange-description*
 
-This plugin ...
+Vim can limit the scope of searches to the remainder of the buffer with the
+'wrapscan' option, but it cannot limit searches to a particular range, other
+than by including special regular expression atoms like |/\%l|. It's not easy
+to restrict a search to the current function, or next 100 lines, even though
+such is often useful to avoid getting lost in the buffer.
 
-HOW IT WORKS								     *
+This plugin provides custom search motions, similar to the built-in |n| / |N|,
+which only move to matches of the current search pattern that fall within a
+certain range that has been specified through the |:SearchInRange| command, or
+an equivalent mapping.
 
 RELATED WORKS								     *
 
@@ -27,7 +34,6 @@ RELATED WORKS								     *
 
 ==============================================================================
 USAGE						     *SearchInRange-usage*
-
 							      *:SearchInRange*
 :[range]SearchInRange 	Search forward to the first occurrence of the current
 			search pattern inside [range]. Limit search to lines
@@ -37,6 +43,28 @@ USAGE						     *SearchInRange-usage*
 			inside [range]. Limit search to lines inside [range]
 			when jumping to the next search result. Without [/],
 			only literal whole words are matched. |:search-args|
+						       *:SearchInRangeInclude*
+:[range]SearchInRangeInclude [range]
+			Add [range] / the current line to the list of ranges
+			that are searched. If you pass the [range] after the
+			command, it is re-evaluated on each search; i.e. you
+			can for example pass marks ('a,'b), and the resulting
+			lines will be reevaluated, adapting to changes in the
+			buffer.
+						       *:SearchInRangeExclude*
+:[range]SearchInRangeExclude [range]
+			Remove [range] / the current line from the list of
+			ranges that are searched. If you pass the [range]
+			after the command, it is re-evaluated on each search.
+							 *:SearchInRangeClear*
+:SearchInRangeClear	Reset the search by clearing all ranges. You need to
+			specify a new one to use this search again. This
+			command is useful to e.g. search in all lines matching
+			"foo": >
+			    :SearchInRangeClear | global/foo/SearchInRangeAdd
+<			or with dynamic ranges: >
+			    :SearchInRangeClear | SearchInRangeAdd /foo/
+<
 								 *v_<Leader>/*
 {Visual}<Leader>/	Jump to the first occurrence of the last search
 			pattern inside selection. Limit search to lines inside
@@ -69,7 +97,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES				      *SearchInRange-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.020 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.022 or
   higher.
 - SearchRepeat.vim (vimscript #4949) plugin (optional)
 
@@ -96,7 +124,9 @@ IDEAS						     *SearchInRange-ideas*
 ==============================================================================
 HISTORY						   *SearchInRange-history*
 
-GOAL
+2.00	RELEASEME
+
+1.00	06-Aug-2014
 First published version.
 
 0.01	07-Aug-2008
