@@ -61,16 +61,17 @@ USAGE						     *SearchInRange-usage*
 			specify a new one to use this search again. This
 			command is useful to e.g. search in all lines matching
 			"foo": >
-			    :SearchInRangeClear | global/foo/SearchInRangeAdd
+			    :SearchInRangeClear | global/foo/SearchInRangeInclude
 <			or with dynamic ranges: >
-			    :SearchInRangeClear | SearchInRangeAdd /foo/
+			    :SearchInRangeClear | SearchInRangeInclude /foo/
 <
-								 *v_<Leader>/*
-{Visual}<Leader>/	Jump to the first occurrence of the last search
-			pattern inside selection. Limit search to lines inside
-			selection when jumping to the next search result.
-								   *<Leader>/*
-<Leader>/{motion}	Use the moved-over lines as a range to limit searches
+								 *v_<Leader>n*
+{Visual}<Leader>n	Jump to the first occurrence of the last search
+			pattern inside the current selection. Limit search to
+			lines inside selection when jumping to the next search
+			result.
+								   *<Leader>n*
+<Leader>n{motion}	Use the moved-over lines as a range to limit searches
 			to. Jump to first occurrence of the last search
 			pattern inside the range.
 
