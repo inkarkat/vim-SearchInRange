@@ -11,6 +11,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.020	20-Aug-2014	Add SearchInRangeInclude, SearchInRangeExclude,
+"				SearchInRangeClear commands.
 "   1.00.019	29-May-2014	Also allow :[range]SearchInRange /{pattern}/
 "				argument syntax with literal whole word search.
 "   1.00.018	26-May-2014	Adapt <Plug>-mapping naming.
