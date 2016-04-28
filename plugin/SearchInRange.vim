@@ -5,12 +5,14 @@
 "   - ingo/err.vim autoload script
 "   - SearchRepeat.vim autoload script (optional integration)
 "
-" Copyright: (C) 2008-2014 Ingo Karkat
+" Copyright: (C) 2008-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.021	29-Apr-2016	Adapt to changed SearchRepeat.vim version 2.00
+"				interface. Change activation mappings.
 "   2.00.020	20-Aug-2014	Add SearchInRangeInclude, SearchInRangeExclude,
 "				SearchInRangeClear commands.
 "   1.00.019	29-May-2014	Also allow :[range]SearchInRange /{pattern}/
@@ -100,7 +102,7 @@ if ! hasmapto('<Plug>(SearchInRangeNext)', 'n')
     nmap gor <Plug>(SearchInRangeNext)
 endif
 if ! hasmapto('<Plug>(SearchInRangePrev)', 'n')
-    nmap goR <Plug>(SearchInRangePrev)
+    nmap gOr <Plug>(SearchInRangePrev)
 endif
 
 
@@ -114,8 +116,8 @@ try
     let s:mapping = (maparg(s:mapping, 'n') ==# '<Plug>(SearchInRangeOperator)' ? s:mapping : '')
 
     call SearchRepeat#Define(
-    \   '<Plug>(SearchInRangeNext)', s:mapping, 'r', '/range/', 'Search forward in range', ':[range]SearchInRange [/][{pattern}][/]',
-    \   '<Plug>(SearchInRangePrev)', '',        'R', '?range?', 'Search backward in range', '',
+    \   '<Plug>(SearchInRangeNext)', '<Plug>(SearchInRangePrev)',
+    \   s:mapping, 'r', 'range', 'Search in range', ':[range]SearchInRange [/][{pattern}][/]',
     \   2
     \)
 catch /^Vim\%((\a\+)\)\=:E117:/	" catch error E117: Unknown function
