@@ -17,6 +17,8 @@
 " REVISION	DATE		REMARKS
 "   2.00.021	20-Aug-2014	Implement skipping over gaps between individual
 "				ranges.
+"				FIX: After moving outside the range, also need
+"				to use "c" search flag.
 "   2.00.020	08-Aug-2014	Change b:startLine + b:endLine to
 "				b:SearchInRange_Include and b:SearchInRange_Exclude.
 "				Add SearchInRange#Include(),
@@ -159,68 +161,79 @@ function! SearchInRange#SearchInRange( isBackward )
 
     let l:message = ['echo', ':' . s:GetRangeMessage() . '/' . ingo#avoidprompt#TranslateLineBreaks(@/)]
     let l:searchFlags = ''
-echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collections#numsort'))
+"****D echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collections#numsort'))
     while l:count > 0 && l:message[0] !=# 'error'
-	let [l:prevLine, l:prevCol] = getpos('.')[1:2]
+	let [l:prevLnum, l:prevCol] = getpos('.')[1:2]
 
-	if l:prevLine < l:startLnum
+	if l:prevLnum < l:startLnum
 	    call s:MoveToStart(l:startLnum)
 	    let l:searchFlags = 'c'
-	elseif l:prevLine > l:endLnum
+	elseif l:prevLnum > l:endLnum
 	    call s:MoveToEnd(l:endLnum)
 	    let l:searchFlags = 'c'
 	endif
 
-	let l:line = search(@/, (a:isBackward ? 'b' : '') . l:searchFlags)
+	let l:lnum = search(@/, (a:isBackward ? 'b' : '') . l:searchFlags)
 	let l:searchFlags = ''
-	if l:line == 0
+	if l:lnum == 0
 	    " No match, not even outside the range(s).
 	    let l:message = ['error', 'Pattern not found: ' . @/]
 	else
-	    if ! a:isBackward && (l:line < l:startLnum || l:line > l:endLnum)
+	    if ! a:isBackward && (l:lnum < l:startLnum || l:lnum > l:endLnum)
 		" We moved outside the range, restart at start of range.
 		call s:MoveToStart(l:startLnum)
-		let l:line = search( @/, '' )
+		let l:lnum = search( @/, 'c' )
 
-		if l:line > l:endLnum
+		if l:lnum > l:endLnum
 		    " Only matches outside of range(s).
 		    let l:message = ['error', 'Pattern not found in ' . s:GetRangeMessage() . ': ' . @/]
 		else
-		    if l:prevLine > l:endLnum
+		    if l:prevLnum > l:endLnum
 			let l:message = ['wrap', 'skipping to TOP of ' . s:GetRangeMultiplicityName(l:lines)]
 		    else
 			let l:message = ['wrap', 'search hit BOTTOM of ' . s:GetRangeMultiplicityName(l:lines) . ', continuing at TOP']
 		    endif
 		endif
-	    elseif a:isBackward && (l:line < l:startLnum || l:line > l:endLnum)
+	    elseif a:isBackward && (l:lnum < l:startLnum || l:lnum > l:endLnum)
 		" We moved outside the range(s), restart at end of range(s).
 		call s:MoveToEnd(l:endLnum)
-		let l:line = search( @/, 'b' )
+		let l:lnum = search( @/, 'bc' )
 
-		if l:line < l:startLnum
+		if l:lnum < l:startLnum
 		    " Only matches outside of range(s).
 		    let l:message = ['error', 'Pattern not found in ' . s:GetRangeMessage() . ': ' . @/]
 		else
-		    if l:prevLine < l:startLnum
+		    if l:prevLnum < l:startLnum
 			let l:message = ['wrap', 'skipping to BOTTOM of ' . s:GetRangeMultiplicityName(l:lines)]
 		    else
 			let l:message = ['wrap', 'search hit TOP of ' . s:GetRangeMultiplicityName(l:lines) . ', continuing at BOTTOM']
 		    endif
 		endif
-	    elseif ! has_key(l:lines, l:line)
+	    elseif ! has_key(l:lines, l:lnum)
 		" We moved outside a range, but still within the overall ranges.
+		" Position to next / previous range start / end to avoid hitting
+		" other intermediate matches not inside a range.
+		if a:isBackward
+		    let l:nextLnum = max(filter(keys(l:lines), 'str2nr(v:val) < l:lnum'))
+		    call s:MoveToEnd(l:nextLnum)
+		else
+		    let l:nextLnum = min(filter(keys(l:lines), 'str2nr(v:val) > l:lnum'))
+		    call s:MoveToStart(l:nextLnum)
+		endif
+		let l:searchFlags = 'c'
+
 		let l:message = ['wrap', 'skipping to ' . (a:isBackward ? 'PREVIOUS' : 'NEXT') . ' range']
-		" TODO: Position to next range start
+
 		continue
 	    else
 		" We're inside a range, check for movements from outside the
 		" range(s) and for wrapping inside the range (which can lead to
 		" here if all matches are inside the range).
-		if l:prevLine < l:startLnum || l:prevLine > l:endLnum
+		if l:prevLnum < l:startLnum || l:prevLnum > l:endLnum
 		    let l:message = ['wrap', (a:isBackward ? 'skipping to BOTTOM of ' . s:GetRangeMultiplicityName(l:lines) . '' : 'skipping to TOP of ' . s:GetRangeMultiplicityName(l:lines))]
-		elseif ! a:isBackward && l:line < l:prevLine
+		elseif ! a:isBackward && l:lnum < l:prevLnum
 		    let l:message = ['wrap', 'search hit BOTTOM, continuing at TOP']
-		elseif a:isBackward && l:line > l:prevLine
+		elseif a:isBackward && l:lnum > l:prevLnum
 		    let l:message = ['wrap', 'search hit TOP, continuing at BOTTOM']
 		endif
 	    endif
@@ -230,7 +243,7 @@ echomsg '****' l:startLnum l:endLnum string(sort(keys(l:lines), 'ingo#collection
 
     if l:message[0] ==# 'error'
 	call ingo#err#Set('E486: ' . l:message[1])
-	call cursor(l:prevLine, l:prevCol)
+	call cursor(l:prevLnum, l:prevCol)
 	return 0
     endif
 
