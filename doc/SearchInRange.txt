@@ -12,7 +12,7 @@ todo				|SearchInRange-todo|
 history				|SearchInRange-history|
 
 ==============================================================================
-DESCRIPTION				       *SearchInRange-description*
+DESCRIPTION					   *SearchInRange-description*
 
 Vim can limit the scope of searches to the remainder of the buffer with the
 'wrapscan' option, but it cannot limit searches to a particular range, other
@@ -33,7 +33,7 @@ RELATED WORKS								     *
   columns.
 
 ==============================================================================
-USAGE						     *SearchInRange-usage*
+USAGE							 *SearchInRange-usage*
 							      *:SearchInRange*
 :[range]SearchInRange 	Search forward to the first occurrence of the current
 			search pattern inside [range]. Limit search to lines
@@ -77,15 +77,14 @@ USAGE						     *SearchInRange-usage*
 
 
 The special searches all start with 'go...' (mnemonic: "go once to special
-match"); and come in search forward (ending with lowercase letter) and search
-backward (uppercase letter) variants.
-								   *gor* *goR*
-[count]gor / goR	Search forward / backward to the [count]'th occurrence
+match"); and come in search forward (go...) and backward (gO...) variants.
+								   *gor* *gOr*
+[count]gor / gOr	Search forward / backward to the [count]'th occurrence
 			of the last search pattern in the previously specified
 			range.
 
 ==============================================================================
-INSTALLATION				      *SearchInRange-installation*
+INSTALLATION					  *SearchInRange-installation*
 
 This script is packaged as a |vimball|. If you have the "gunzip" decompressor
 in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
@@ -95,15 +94,15 @@ vimball or via the |:UseVimball| command. >
     :so %
 To uninstall, use the |:RmVimball| command.
 
-DEPENDENCIES				      *SearchInRange-dependencies*
+DEPENDENCIES					  *SearchInRange-dependencies*
 
 - Requires Vim 7.0 or higher.
 - Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.022 or
   higher.
-- SearchRepeat.vim (vimscript #4949) plugin (optional)
+- SearchRepeat.vim (vimscript #4949) plugin, version 2.00 or higher (optional)
 
 ==============================================================================
-INTEGRATION				       *SearchInRange-integration*
+INTEGRATION					   *SearchInRange-integration*
 
 If the SearchRepeat plugin is installed, a parallel set of "go now and for
 next searches" mappings (starting with 'gn...' instead of 'go...') is
@@ -112,18 +111,18 @@ installed. These mappings have the same effect, but in addition re-program the
 used).
 
 ==============================================================================
-LIMITATIONS				       *SearchInRange-limitations*
+LIMITATIONS					   *SearchInRange-limitations*
 
-KNOWN PROBLEMS				    *SearchInRange-known-problems*
+KNOWN PROBLEMS					*SearchInRange-known-problems*
 
-TODO						      *SearchInRange-todo*
+TODO							  *SearchInRange-todo*
 
 - Optionally highlight range.
 
-IDEAS						     *SearchInRange-ideas*
+IDEAS							 *SearchInRange-ideas*
 
 ==============================================================================
-HISTORY						   *SearchInRange-history*
+HISTORY						       *SearchInRange-history*
 
 2.00	RELEASEME
 - Add SearchInRangeInclude, SearchInRangeExclude, SearchInRangeClear commands.
