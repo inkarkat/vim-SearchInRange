@@ -15,6 +15,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.023	23-Nov-2017	FIX: Typo: Integration into SearchRepeat.vim
+"				broken because of trailing <CR> in code.
 "   2.00.022	21-Nov-2017	Also add {pattern} to the search history.
 "   2.00.021	20-Aug-2014	Implement skipping over gaps between individual
 "				ranges.
@@ -322,7 +324,7 @@ function! SearchInRange#SetAndSearchInRange( startLnum, endLnum, pattern )
     endif
 
     " Integration into SearchRepeat.vim
-    silent! call SearchRepeat#Set("\<Plug>(SearchInRangeNext)", "\<Plug>(SearchInRangePrev)", 2)<CR>
+    silent! call SearchRepeat#Set("\<Plug>(SearchInRangeNext)", "\<Plug>(SearchInRangePrev)", 2)
 
     return SearchInRange#SearchInRange(0)
 endfunction
