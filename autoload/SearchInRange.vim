@@ -9,12 +9,13 @@
 "   - ingo/range.vim autoload script
 "   - SearchRepeat.vim autoload script (optional integration)
 "
-" Copyright: (C) 2008-2014 Ingo Karkat
+" Copyright: (C) 2008-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.022	21-Nov-2017	Also add {pattern} to the search history.
 "   2.00.021	20-Aug-2014	Implement skipping over gaps between individual
 "				ranges.
 "				FIX: After moving outside the range, also need
@@ -317,6 +318,7 @@ function! SearchInRange#SetAndSearchInRange( startLnum, endLnum, pattern )
 
     if ! empty(l:pattern)
 	let @/ = l:pattern
+	call histadd('search', escape(@/, '/'))
     endif
 
     " Integration into SearchRepeat.vim
