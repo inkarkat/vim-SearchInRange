@@ -25,6 +25,11 @@ which only move to matches of the current search pattern that fall within a
 certain range that has been specified through the |:SearchInRange| command, or
 an equivalent mapping.
 
+SEE ALSO								     *
+
+- Check out the |SearchRepeat.vim| plugin page (vimscript #4949) for a full
+  list of custom searches that integrate with it.
+
 RELATED WORKS								     *
 
 - range-search (vimscript #1396) defines a :R command.
