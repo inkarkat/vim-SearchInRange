@@ -128,6 +128,7 @@ HISTORY						       *SearchInRange-history*
 - Add SearchInRangeInclude, SearchInRangeExclude, SearchInRangeClear commands.
   These allow dynamic ranges that get re-interpreted on each search.
 - Implement skipping over gaps between individual ranges.
+- Also add {pattern} to the search history.
 
 1.01	26-Sep-2014
 - FIX: Need to explicitly account for closed folds in the range passed to
@@ -145,7 +146,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2008-2016 Ingo Karkat
+Copyright: (C) 2008-2017 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
