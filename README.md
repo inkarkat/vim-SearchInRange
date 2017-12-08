@@ -1,0 +1,153 @@
+SEARCH IN RANGE   
+===============================================================================
+_by Ingo Karkat_
+
+DESCRIPTION
+------------------------------------------------------------------------------
+
+Vim can limit the scope of searches to the remainder of the buffer with the
+'wrapscan' option, but it cannot limit searches to a particular range, other
+than by including special regular expression atoms like /\%l. It's not easy
+to restrict a search to the current function, or next 100 lines, even though
+such is often useful to avoid getting lost in the buffer.
+
+This plugin provides custom search motions, similar to the built-in n / N,
+which only move to matches of the current search pattern that fall within a
+certain range that has been specified through the :SearchInRange command, or
+an equivalent mapping.
+
+### SEE ALSO
+
+- Check out the SearchRepeat.vim plugin page ([vimscript #4949](http://www.vim.org/scripts/script.php?script_id=4949)) for a full
+  list of custom searches that integrate with it.
+
+### RELATED WORKS
+
+- range-search ([vimscript #1396](http://www.vim.org/scripts/script.php?script_id=1396)) defines a :R command.
+- vis.vim ([vimscript #1195](http://www.vim.org/scripts/script.php?script_id=1195)) defines a :S command and // and ?? mappings. It
+  works by modifying the search pattern to add restrictions for lines and
+  columns.
+
+USAGE
+------------------------------------------------------------------------------
+
+    :[range]SearchInRange   Search forward to the first occurrence of the current
+                            search pattern inside [range]. Limit search to lines
+                            inside [range] when jumping to the next search result.
+    :[range]SearchInRange [/]{pattern}[/]
+                            Search for {pattern}, starting with the first occurrence
+                            inside [range]. Limit search to lines inside [range]
+                            when jumping to the next search result. Without [/],
+                            only literal whole words are matched. :search-args
+
+    :[range]SearchInRangeInclude [range]
+                            Add [range] / the current line to the list of ranges
+                            that are searched. If you pass the [range] after the
+                            command, it is re-evaluated on each search; i.e. you
+                            can for example pass marks ('a,'b), and the resulting
+                            lines will be reevaluated, adapting to changes in the
+                            buffer.
+
+    :[range]SearchInRangeExclude [range]
+                            Remove [range] / the current line from the list of
+                            ranges that are searched. If you pass the [range]
+                            after the command, it is re-evaluated on each search.
+
+    :SearchInRangeClear     Reset the search by clearing all ranges. You need to
+                            specify a new one to use this search again. This
+                            command is useful to e.g. search in all lines matching
+                            "foo":
+                                :SearchInRangeClear | global/foo/SearchInRangeInclude
+                            or with dynamic ranges:
+                                :SearchInRangeClear | SearchInRangeInclude /foo/
+
+    {Visual}<Leader>n       Jump to the first occurrence of the last search
+                            pattern inside the current selection. Limit search to
+                            lines inside selection when jumping to the next search
+                            result.
+
+     Leader>n{motion}       Use the moved-over lines as a range to limit searches
+                            to. Jump to first occurrence of the last search
+                            pattern inside the range.
+
+    The special searches all start with 'go...' (mnemonic: "go once to special
+    match"); and come in search forward (go...) and backward (gO...) variants.
+
+    [count]gor / gOr        Search forward / backward to the [count]'th occurrence
+                            of the last search pattern in the previously specified
+                            range.
+
+INSTALLATION
+------------------------------------------------------------------------------
+
+The code is hosted in a Git repo at
+    https://github.com/inkarkat/vim-SearchInRange
+You can use your favorite plugin manager, or "git clone" into a directory used
+for Vim packages. Releases are on the "stable" branch, the latest unstable
+development snapshot on "master".
+
+This script is also packaged as a vimball. If you have the "gunzip"
+decompressor in your PATH, simply edit the \*.vmb.gz package in Vim; otherwise,
+decompress the archive first, e.g. using WinZip. Inside Vim, install by
+sourcing the vimball or via the :UseVimball command.
+
+    vim SearchInRange*.vmb.gz
+    :so %
+
+To uninstall, use the :RmVimball command.
+
+### DEPENDENCIES
+
+- Requires Vim 7.0 or higher.
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.022 or
+  higher.
+- SearchRepeat.vim ([vimscript #4949](http://www.vim.org/scripts/script.php?script_id=4949)) plugin, version 2.00 or higher (optional)
+
+INTEGRATION
+------------------------------------------------------------------------------
+
+If the SearchRepeat plugin is installed, a parallel set of "go now and for
+next searches" mappings (starting with 'gn...' instead of 'go...') is
+installed. These mappings have the same effect, but in addition re-program the
+'n/N' keys to repeat this particular search (until another gn... search is
+used).
+
+TODO
+------------------------------------------------------------------------------
+
+- Optionally highlight range.
+
+### CONTRIBUTING
+
+Report any bugs, send patches, or suggest features via the issue tracker at
+https://github.com/inkarkat/vim-SearchInRange/issues or email (address below).
+
+HISTORY
+------------------------------------------------------------------------------
+
+##### 2.00    RELEASEME
+- Add SearchInRangeInclude, SearchInRangeExclude, SearchInRangeClear commands.
+  These allow dynamic ranges that get re-interpreted on each search.
+- Implement skipping over gaps between individual ranges.
+- Also add {pattern} to the search history.
+
+##### 1.01    26-Sep-2014
+- FIX: Need to explicitly account for closed folds in the range passed to
+  SearchInRange#SetAndSearchInRange().
+- FIX: When moving to start / end of range, must use "c" search flag to avoid
+  skipping a match directly at the border.
+- FIX: After moving outside the range, also need to use "c" search flag.
+- FIX: Correct default mappings in documentation.
+  __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.022!__
+
+##### 1.00    06-Aug-2014
+- First published version.
+
+##### 0.01    07-Aug-2008
+- Started development.
+
+------------------------------------------------------------------------------
+Copyright: (C) 2008-2017 Ingo Karkat -
+The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
+
+Maintainer:     Ingo Karkat <ingo@karkat.de>

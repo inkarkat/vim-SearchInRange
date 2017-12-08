@@ -91,10 +91,16 @@ match"); and come in search forward (go...) and backward (gO...) variants.
 ==============================================================================
 INSTALLATION					  *SearchInRange-installation*
 
-This script is packaged as a |vimball|. If you have the "gunzip" decompressor
-in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
-the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
-vimball or via the |:UseVimball| command. >
+The code is hosted in a Git repo at
+    https://github.com/inkarkat/vim-SearchInRange
+You can use your favorite plugin manager, or "git clone" into a directory used
+for Vim |packages|. Releases are on the "stable" branch, the latest unstable
+development snapshot on "master".
+
+This script is also packaged as a |vimball|. If you have the "gunzip"
+decompressor in your PATH, simply edit the *.vmb.gz package in Vim; otherwise,
+decompress the archive first, e.g. using WinZip. Inside Vim, install by
+sourcing the vimball or via the |:UseVimball| command. >
     vim SearchInRange*.vmb.gz
     :so %
 To uninstall, use the |:RmVimball| command.
@@ -125,6 +131,11 @@ TODO							  *SearchInRange-todo*
 - Optionally highlight range.
 
 IDEAS							 *SearchInRange-ideas*
+
+CONTRIBUTING			*SearchInRange-contribute*
+
+Report any bugs, send patches, or suggest features via the issue tracker at
+https://github.com/inkarkat/vim-SearchInRange/issues or email (address below).
 
 ==============================================================================
 HISTORY						       *SearchInRange-history*
