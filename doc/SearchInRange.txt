@@ -6,6 +6,7 @@ description			|SearchInRange-description|
 usage				|SearchInRange-usage|
 installation			|SearchInRange-installation|
 integration			|SearchInRange-integration|
+configuration			|SearchInRange-configuration|
 limitations			|SearchInRange-limitations|
 known problems			|SearchInRange-known-problems|
 todo				|SearchInRange-todo|
@@ -112,6 +113,19 @@ DEPENDENCIES					  *SearchInRange-dependencies*
   higher.
 - SearchRepeat.vim (vimscript #4949) plugin, version 2.00 or higher (optional)
 
+==============================================================================
+CONFIGURATION					 *SearchInRange-configuration*
+
+For a permanent configuration, put the following commands into your |vimrc|:
+							 *SearchInRange-remap*
+If you want to use different mappings, map your keys to the
+<Plug>(SearchInRange...) mapping targets _before_ sourcing the script
+(e.g. in your |vimrc|): >
+    xmap <Leader>n <Plug>(SearchInRange)
+    nmap <Leader>n <Plug>(SearchInRangeOperator)
+    nmap gor <Plug>(SearchInRangeNext)
+    nmap gOr <Plug>(SearchInRangePrev)
+<
 ==============================================================================
 INTEGRATION					   *SearchInRange-integration*
 

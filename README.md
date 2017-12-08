@@ -103,6 +103,20 @@ To uninstall, use the :RmVimball command.
   higher.
 - SearchRepeat.vim ([vimscript #4949](http://www.vim.org/scripts/script.php?script_id=4949)) plugin, version 2.00 or higher (optional)
 
+CONFIGURATION
+------------------------------------------------------------------------------
+
+For a permanent configuration, put the following commands into your vimrc:
+
+If you want to use different mappings, map your keys to the
+ Plug>(SearchInRange...) mapping targets _before_ sourcing the script
+(e.g. in your vimrc):
+
+    xmap <Leader>n <Plug>(SearchInRange)
+    nmap <Leader>n <Plug>(SearchInRangeOperator)
+    nmap gor <Plug>(SearchInRangeNext)
+    nmap gOr <Plug>(SearchInRangePrev)
+
 INTEGRATION
 ------------------------------------------------------------------------------
 
