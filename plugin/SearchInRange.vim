@@ -5,67 +5,10 @@
 "   - ingo/err.vim autoload script
 "   - SearchRepeat.vim autoload script (optional integration)
 "
-" Copyright: (C) 2008-2016 Ingo Karkat
+" Copyright: (C) 2008-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.00.021	29-Apr-2016	Adapt to changed SearchRepeat.vim version 2.00
-"				interface. Change activation mappings.
-"   2.00.020	20-Aug-2014	Add SearchInRangeInclude, SearchInRangeExclude,
-"				SearchInRangeClear commands.
-"   1.00.019	29-May-2014	Also allow :[range]SearchInRange /{pattern}/
-"				argument syntax with literal whole word search.
-"   1.00.018	26-May-2014	Adapt <Plug>-mapping naming.
-"				Make go... mappings configurable.
-"				Adapt to polished SearchRepeat interface.
-"	017	26-Apr-2014	Split off autoload script.
-"				Abort on errors.
-"				Use :map-expr for the operator to also allow a
-"				[count] before it.
-"   	016	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
-"				Use ingo#msg#WarningMsg().
-"	015	24-May-2013	Change <Leader>/ to <Leader>n; / implies
-"				entering a new pattern, whereas n is related to
-"				the last search pattern, also in [n.
-"	014	24-Jun-2012	Don't define the <Leader>/ default mapping in
-"				select mode, just visual mode.
-"	013	14-Mar-2012	Split off documentation.
-"	012	30-Sep-2011	Use <silent> for <Plug> mapping instead of
-"				default mapping.
-"	011	13-Jul-2010	ENH: Now handling [count].
-"				BUG: Fixed mixed up "skipping to TOP/BOTTOM of
-"				range" message when the search wraps around.
-"				Make s:startLine a buffer variable, so that the
-"				range is remembered for each buffer separately.
-"				(Linking this to the window doesn't make sense,
-"				as the fixed range probably won't apply to a
-"				different buffer shown in the same window, and
-"				one can easily re-set the range for any new
-"				buffer.)
-"	010	13-Jul-2010	Refactored so that error / wrap / echo message
-"				output is done at the end of the script, not
-"				inside the logic.
-"				ENH: The search adds the original cursor
-"				position to the jump list, like the built-in
-"				[/?*#nN] commands.
-"	009	17-Aug-2009	BF: Checking for undefined range to avoid "E121:
-"				Undefined variable: b:startLine".
-"	008	17-Aug-2009	Added a:description to SearchRepeat#Register().
-"	007	29-May-2009	Added "go once" mappings that do not integrate
-"				into SearchRepeat.vim.
-"	006	15-May-2009	BF: Translating line breaks in search pattern
-"				via EchoWithoutScrolling#TranslateLineBreaks()
-"				to avoid echoing only the last part of the
-"				search pattern when it contains line breaks.
-"	005	06-May-2009	Added a:relatedCommands to
-"				SearchRepeat#Register().
-"	004	11-Feb-2009	Now setting v:warningmsg on warnings.
-"	003	03-Feb-2009	Added activation mapping to SearchRepeat
-"				registration.
-"	002	16-Jan-2009	Now setting v:errmsg on errors.
-"	001	07-Aug-2008	file creation
 
 " Avoid installing twice or when in unsupported Vim version.
 if exists('g:loaded_SearchInRange') || (v:version < 700)
