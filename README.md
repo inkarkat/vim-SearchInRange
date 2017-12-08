@@ -125,7 +125,7 @@ https://github.com/inkarkat/vim-SearchInRange/issues or email (address below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.00    RELEASEME
+##### 2.00    08-Dec-2017
 - Add SearchInRangeInclude, SearchInRangeExclude, SearchInRangeClear commands.
   These allow dynamic ranges that get re-interpreted on each search.
 - Implement skipping over gaps between individual ranges.
